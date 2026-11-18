@@ -5,8 +5,8 @@ export type Announcement = {
   on: boolean;
   text: string;
   style: AnnouncementStyle;
-  linkText?: string;
-  linkUrl?: string;
+  linkText?: string | undefined;
+  linkUrl?: string | undefined;
   /** ISO date; the bar disappears by itself after this moment. */
   until?: string | null;
 };

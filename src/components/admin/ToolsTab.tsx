@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Gift, Megaphone, NotebookPen, TrendingUp, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/db";
+import { db as supabase } from "@/lib/db";
 import { getSetting, logActivity, money, saveSetting, shortDate, timeAgo } from "@/lib/admin";
 import { renewalForecast } from "@/lib/admin-insights";
 import { ANNOUNCEMENT_KEY, liveAnnouncement, type Announcement, type AnnouncementStyle } from "@/lib/announcement";
@@ -24,7 +24,7 @@ export function ToolsTab() {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
         <Stat label="Renewals due · 30 days" value={q.isLoading ? "…" : f.due.toLocaleString()} tone="paypal" sub={money(f.dueAmount)} icon={<TrendingUp className="size-4" />} />
-        <Stat label="People who renew" value={q.isLoading ? "…" : `${Math.round(f.rate * 100)}%`} tone="paypalSky" sub="of memberships that ended (90 days)" icon={<TrendingUp className="size-4" />} />
+        <Stat label="People who renew" value={q.isLoading ? "…" : `${Math.round(f.rate * 100)}%`} tone="paypalSky" sub="renewed within 90 days" icon={<TrendingUp className="size-4" />} />
         <Stat label="Expected renewals" value={q.isLoading ? "…" : money(f.expected)} tone="paypalGold" sub="next 30 days forecast" icon={<TrendingUp className="size-4" />} />
         <Stat label="Active members" value={q.isLoading ? "…" : subs.filter((s) => String(s.status).toLowerCase() === "active" && (!s.expires_at || new Date(s.expires_at).getTime() > Date.now())).length.toLocaleString()} tone="paypalMist" sub="can receive free days" icon={<Gift className="size-4" />} />
       </div>
