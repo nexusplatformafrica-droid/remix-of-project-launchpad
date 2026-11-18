@@ -255,7 +255,7 @@ export function ContentTab({ userId, restricted = false }: { userId?: string; re
   const list = sub === "movies" ? movies : series;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {!restricted && <ExternalLatest />}
       <div className="flex flex-wrap gap-2 rounded-full bg-white/60 p-1.5 ring-1 ring-black/5">
         {([
@@ -462,7 +462,7 @@ function EpisodesManager({ series, restricted = false, draftKey, uploading }: { 
   });
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
+    <div className="grid gap-3 xl:grid-cols-[1fr_1fr]">
       <Panel title={ep.id ? "Update episode" : "Add episode"}>
         <select className={softField} value={active} onChange={(e) => setTitleId(e.target.value)}>
           {series.length === 0 && <option value="">No series yet — add one first</option>}

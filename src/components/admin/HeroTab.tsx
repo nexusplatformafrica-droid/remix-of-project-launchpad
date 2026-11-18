@@ -48,7 +48,7 @@ export function HeroTab() {
   };
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-3">
       <Panel
         title={`Hero slides (${slides.length})`}
         action={

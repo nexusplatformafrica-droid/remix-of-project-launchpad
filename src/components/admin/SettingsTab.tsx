@@ -64,7 +64,7 @@ export function SettingsTab() {
     }));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <MovieRelayPanel />
       <ApiTokenPanel />
       <Panel
@@ -75,7 +75,7 @@ export function SettingsTab() {
           </button>
         }
       >
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-3 xl:grid-cols-2">
           {(["vip", "svip"] as const).map((tier) => (
             <div key={tier}>
               <p className="mb-2 text-[12px] font-bold uppercase tracking-wide opacity-60">

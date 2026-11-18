@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fdb } from "@/lib/fdb";
 import { TeamTab } from "@/components/admin/TeamTab";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { UserCog, LayoutDashboard, Users, Film, Wallet, Settings, ShieldCheck, MessageCircle, Sparkles, MonitorPlay, Music2, MicVocal } from "lucide-react";
+import { UserCog, LayoutDashboard, Users, Film, Wallet, Settings, ShieldCheck, MessageCircle, Sparkles, MonitorPlay, Music2, MicVocal, LineChart, Crown, FileSpreadsheet, HeartPulse, Search, RefreshCw } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
@@ -19,6 +19,11 @@ import { HeroTab } from "@/components/admin/HeroTab";
 import { MusicHeroTab } from "@/components/admin/MusicHeroTab";
 import { ArtistsTab } from "@/components/admin/ArtistsTab";
 import { ChannelsTab } from "@/components/admin/ChannelsTab";
+import { InsightsTab } from "@/components/admin/InsightsTab";
+import { MembersTab } from "@/components/admin/MembersTab";
+import { ReportsTab } from "@/components/admin/ReportsTab";
+import { SystemTab } from "@/components/admin/SystemTab";
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandShortcut } from "@/components/ui/command";
 import { SOFT_BG } from "@/components/admin/ui";
 
 export const Route = createFileRoute("/admin")({
@@ -52,6 +57,9 @@ export const Route = createFileRoute("/admin")({
 
 const TABS: { k: AdminTab; t: string; i: typeof Users }[] = [
   { k: "overview", t: "Overview", i: LayoutDashboard },
+  { k: "insights", t: "Insights", i: LineChart },
+  { k: "wallet", t: "Wallet", i: Wallet },
+  { k: "members", t: "Members", i: Crown },
   { k: "users", t: "Users", i: Users },
   { k: "content", t: "Content", i: Film },
   { k: "hero", t: "Hero", i: Sparkles },
@@ -59,7 +67,8 @@ const TABS: { k: AdminTab; t: string; i: typeof Users }[] = [
   { k: "artists", t: "Artists", i: MicVocal },
   { k: "channels", t: "TV channels", i: MonitorPlay },
   { k: "notify", t: "Notify", i: MessageCircle },
-  { k: "wallet", t: "Wallet", i: Wallet },
+  { k: "reports", t: "Reports", i: FileSpreadsheet },
+  { k: "system", t: "System", i: HeartPulse },
   { k: "settings", t: "Settings", i: Settings },
   { k: "team", t: "Admins", i: UserCog },
 ];
@@ -91,6 +100,19 @@ function AdminPage() {
   const tabs = isAdmin ? TABS : TABS.filter((t) => STAFF_TABS.includes(t.k));
   const current: AdminTab = tabs.some((t) => t.k === tab) ? tab : "overview";
   const go = (t: AdminTab) => setTab(tabs.some((x) => x.k === t) ? t : "overview");
+  const qc = useQueryClient();
+  const [palette, setPalette] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const refreshAll = () => void qc.invalidateQueries();
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,41 +122,58 @@ function AdminPage() {
           <TopBar />
         </div>
         <main className="px-2 pb-28 sm:px-4 lg:px-6 lg:pb-10">
-          <div className={`mt-3 rounded-[32px] p-4 sm:p-6 ${SOFT_BG}`}>
-            <header className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h1 className="text-[24px] font-black leading-tight tracking-tight">Admin dashboard</h1>
-                <p className="text-[12px] opacity-60">MOVIE MAX control centre</p>
+          <div className={`mt-2 rounded-3xl p-3 sm:p-4 ${SOFT_BG}`}>
+            <header className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="text-[19px] font-black leading-tight tracking-tight">Admin dashboard</h1>
+                <p className="text-[11px] opacity-60">MOVIE MAX control centre</p>
               </div>
-              <span className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-semibold ring-1 ring-black/5">
-                <ShieldCheck className="size-4 text-[oklch(0.6_0.14_150)]" />
-                {user?.email ?? "not signed in"}
-              </span>
+              <div className="flex min-w-0 items-center gap-1.5">
+                {canOpen && (
+                  <>
+                    <button type="button" onClick={() => setPalette(true)} className="flex h-8 items-center gap-1.5 rounded-full bg-white/75 px-3 text-[12px] font-semibold ring-1 ring-black/5 hover:bg-white">
+                      <Search className="size-3.5" /> <span className="hidden sm:inline">Find anything</span>
+                      <kbd className="hidden rounded bg-black/5 px-1 text-[10px] sm:inline">Ctrl K</kbd>
+                    </button>
+                    <button type="button" onClick={refreshAll} aria-label="Refresh all data" className="grid size-8 place-items-center rounded-full bg-white/75 ring-1 ring-black/5 hover:bg-white">
+                      <RefreshCw className="size-3.5" />
+                    </button>
+                  </>
+                )}
+                <span className="flex min-w-0 items-center gap-1.5 rounded-full bg-white/75 px-2.5 py-1.5 text-[11.5px] font-semibold ring-1 ring-black/5">
+                  <ShieldCheck className="size-3.5 shrink-0 text-[oklch(0.6_0.14_150)]" />
+                  <span className="max-w-[140px] truncate sm:max-w-[220px]">{user?.email ?? "not signed in"}</span>
+                </span>
+              </div>
             </header>
 
             {checking || (!isAdmin && !!user && staffQ.isLoading) ? (
               <p className="py-16 text-center text-[13px] opacity-60">Checking access…</p>
             ) : !user || !canOpen ? null : (
               <>
-                <nav className="mt-5 flex flex-wrap gap-1.5 rounded-full bg-white/60 p-1.5 ring-1 ring-black/5">
+                <nav className="scrollbar-none -mx-1 mt-3 flex gap-1 overflow-x-auto rounded-2xl bg-white/60 p-1 ring-1 ring-black/5">
                   {tabs.map((t) => (
                     <button
                       key={t.k}
                       type="button"
                       onClick={() => go(t.k)}
-                      className={`flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold transition ${
+                      className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-[12px] font-bold transition ${
                         current === t.k
                           ? "bg-[linear-gradient(100deg,oklch(0.96_0.05_95),oklch(0.89_0.11_78))] shadow-[0_10px_24px_-16px_oklch(0.8_0.12_75)]"
                           : "opacity-60 hover:opacity-90"
                       }`}
                     >
-                      <t.i className="size-4" /> {t.t}
+                      <t.i className="size-3.5" /> {t.t}
                     </button>
                   ))}
                 </nav>
 
-                <div className="mt-5">
+                <div className="mt-3">
                   {current === "overview" && <Overview go={go} limited={isStaff} />}
+                  {isAdmin && current === "insights" && <InsightsTab />}
+                  {isAdmin && current === "members" && <MembersTab />}
+                  {isAdmin && current === "reports" && <ReportsTab />}
+                  {isAdmin && current === "system" && <SystemTab />}
                   {current === "users" && <UsersTab />}
                   {current === "content" && <ContentTab userId={user.id} restricted={isStaff} />}
                   {current === "hero" && <HeroTab />}
@@ -146,6 +185,58 @@ function AdminPage() {
                   {isAdmin && current === "settings" && <SettingsTab />}
                   {isAdmin && current === "team" && <TeamTab />}
                 </div>
+                <CommandDialog open={palette} onOpenChange={setPalette}>
+                  <CommandInput placeholder="Jump to a tool or action…" />
+                  <CommandList>
+                    <CommandEmpty>Nothing found.</CommandEmpty>
+                    <CommandGroup heading="Tools">
+                      {tabs.map((t) => (
+                        <CommandItem
+                          key={t.k}
+                          value={t.t}
+                          onSelect={() => {
+                            go(t.k);
+                            setPalette(false);
+                          }}
+                        >
+                          <t.i className="mr-2 size-4" /> {t.t}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandGroup heading="Actions">
+                      <CommandItem
+                        value="Upload a movie"
+                        onSelect={() => {
+                          go("content");
+                          setPalette(false);
+                        }}
+                      >
+                        <Film className="mr-2 size-4" /> Upload a movie
+                      </CommandItem>
+                      {isAdmin && (
+                        <CommandItem
+                          value="Withdraw money"
+                          onSelect={() => {
+                            go("wallet");
+                            setPalette(false);
+                          }}
+                        >
+                          <Wallet className="mr-2 size-4" /> Withdraw money
+                        </CommandItem>
+                      )}
+                      <CommandItem
+                        value="Refresh all data"
+                        onSelect={() => {
+                          refreshAll();
+                          setPalette(false);
+                        }}
+                      >
+                        <RefreshCw className="mr-2 size-4" /> Refresh all data
+                        <CommandShortcut>⟳</CommandShortcut>
+                      </CommandItem>
+                    </CommandGroup>
+                  </CommandList>
+                </CommandDialog>
               </>
             )}
           </div>

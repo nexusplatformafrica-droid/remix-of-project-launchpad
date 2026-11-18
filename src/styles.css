@@ -80,11 +80,28 @@
   --color-channel-foreground: var(--channel-foreground);
   --color-app-install: var(--app-install);
   --color-app-install-foreground: var(--app-install-foreground);
+  --color-paypal-gold: var(--paypal-gold);
+  --color-paypal-gold-hover: var(--paypal-gold-hover);
+  --color-paypal-navy: var(--paypal-navy);
+  --color-paypal-blue: var(--paypal-blue);
+  --color-paypal-sky: var(--paypal-sky);
+  --color-paypal-mist: var(--paypal-mist);
+  --color-paypal-foreground: var(--paypal-foreground);
 }
 
 :root {
   --app-install: oklch(0.56 0.21 253);
   --app-install-foreground: oklch(0.99 0 0);
+  /* PayPal palette: gold button, navy/blue brand, used for money surfaces. */
+  --paypal-gold: oklch(0.85 0.165 83);
+  --paypal-gold-hover: oklch(0.8 0.165 80);
+  --paypal-navy: oklch(0.32 0.15 264);
+  --paypal-blue: oklch(0.56 0.19 255);
+  --paypal-sky: oklch(0.65 0.14 236);
+  --paypal-mist: oklch(0.965 0.018 245);
+  --paypal-foreground: oklch(0.99 0 0);
+  --gradient-paypal: linear-gradient(135deg, var(--paypal-navy) 0%, var(--paypal-blue) 62%, var(--paypal-sky) 100%);
+  --shadow-paypal: 0 14px 30px -18px color-mix(in oklab, var(--paypal-navy) 70%, transparent);
   --channel: oklch(0.79 0.21 152);
   --channel-foreground: oklch(0.2 0.04 152);
   --wa-banner-shade: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 96%, transparent) 30%, color-mix(in oklab, var(--background) 82%, transparent) 48%, transparent 78%);
@@ -250,6 +267,15 @@
 .subscribe-original {
   background-image: var(--gradient-subscribe);
   box-shadow: var(--shadow-subscribe);
+}
+
+@utility bg-paypal-gradient {
+  background-image: var(--gradient-paypal);
+  color: var(--paypal-foreground);
+}
+
+@utility shadow-paypal {
+  box-shadow: var(--shadow-paypal);
 }
 
 @utility badge-hot {

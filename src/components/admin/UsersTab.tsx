@@ -203,7 +203,7 @@ function UserDetail({ user, onBack }: { user: Row | undefined; onBack: () => voi
   const chart = seriesByDay(detail.data?.acts ?? [], 14);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <button type="button" onClick={onBack} className={`${ghostBtn} inline-flex items-center gap-2`}>
         <ArrowLeft className="size-4" /> All users
       </button>
@@ -241,7 +241,7 @@ function UserDetail({ user, onBack }: { user: Row | undefined; onBack: () => voi
         <SoftArea data={chart} color="oklch(0.65 0.14 200)" height={200} />
       </Panel>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-2">
         <Panel title="Membership control">
           <div className="grid grid-cols-2 gap-2">
             {(["vip", "svip"] as const).map((k) => (
@@ -305,7 +305,7 @@ function UserDetail({ user, onBack }: { user: Row | undefined; onBack: () => voi
           </div>
         </Panel>
 
-        <div className="space-y-5">
+        <div className="space-y-3">
           <Panel title="Transactions">
             {(detail.data?.tx.length ?? 0) === 0 ? (
               <Empty>No transactions.</Empty>

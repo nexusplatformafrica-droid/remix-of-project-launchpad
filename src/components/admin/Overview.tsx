@@ -6,13 +6,15 @@ import { db as supabase } from "@/lib/db";
 import { purgeTable } from "@/lib/fdb";
 import { money, seriesByDay, timeAgo } from "@/lib/admin";
 import { walletBalance } from "@/lib/relworx";
-import { Empty, Panel, SoftArea, Stat } from "./ui";
+import { revenueWindows, startOfDay, expiringWithin } from "@/lib/admin-insights";
+import { Empty, MiniStat, Panel, SoftArea, Stat } from "./ui";
 
-export type AdminTab = "overview" | "users" | "content" | "hero" | "mhero" | "artists" | "notify" | "wallet" | "settings" | "team" | "channels";
+export type AdminTab = "overview" | "insights" | "members" | "reports" | "system" | "users" | "content" | "hero" | "mhero" | "artists" | "notify" | "wallet" | "settings" | "team" | "channels";
 
-async function loadOverview() {
+/** Everything the overview, insights, members and reports tools read — one cached load. */
+export async function loadOverview() {
   const [profiles, subs, tx, withdrawals, titles, episodes, activities, roles] = await Promise.all([
-    supabase.from("profiles").select("id, created_at, display_name, email, phone, last_seen").order("created_at", { ascending: false }),
+    supabase.from("profiles").select("id, created_at, display_name, email, phone, msisdn, country_code, last_seen").order("created_at", { ascending: false }),
     supabase.from("luo_subscriptions").select("*").order("created_at", { ascending: false }),
     supabase.from("luo_transactions").select("*").order("created_at", { ascending: false }),
     supabase.from("luo_withdrawals").select("*").order("created_at", { ascending: false }),
@@ -92,10 +94,22 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
     (p) => p.last_seen && now - new Date(p.last_seen).getTime() < 24 * 60 * 60 * 1000,
   ).length;
   const profilesById = new Map((d?.profiles ?? []).map((profile) => [profile.id, profile]));
+  const today = startOfDay(now);
+  const isToday = (v?: string | null) => !!v && new Date(v).getTime() >= today;
+  const rev = revenueWindows(d?.tx ?? [], now);
+  const todayTx = (d?.tx ?? []).filter((t) => isToday(t.created_at));
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {!limited && <MiniStat label="Revenue today" value={money(rev.today)} onClick={() => go("wallet")} />}
+        {!limited && <MiniStat label="7 days" value={money(rev.week)} onClick={() => go("insights")} />}
+        <MiniStat label="New users" value={(d?.profiles ?? []).filter((p) => isToday(p.created_at)).length} onClick={() => go("users")} />
+        <MiniStat label="New members" value={(d?.subs ?? []).filter((s) => isToday(s.created_at)).length} onClick={() => go(limited ? "users" : "members")} />
+        <MiniStat label="Paid today" value={`${todayTx.filter((t) => t.status === "success").length}/${todayTx.length}`} onClick={limited ? undefined : () => go("wallet")} />
+        <MiniStat label="Expiring 3d" value={expiringWithin(d?.subs ?? [], 3, now).length} onClick={() => go(limited ? "users" : "members")} />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
         <Stat
           label="Total users"
           value={(d?.profiles.length ?? 0).toLocaleString()}
@@ -140,16 +154,16 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-3 xl:grid-cols-[1.4fr_1fr]">
         {!limited && <Panel title="Revenue · last 14 days" action={<span className="text-[12px] opacity-60">{money(revenue)} lifetime</span>}>
-          <SoftArea data={revChart} prefix="UGX " color="oklch(0.72 0.15 40)" />
+          <SoftArea data={revChart} prefix="UGX " color="oklch(0.56 0.19 255)" height={170} />
         </Panel>}
         <Panel title="New users · last 14 days">
-          <SoftArea data={userChart} color="oklch(0.6 0.15 300)" height={220} />
+          <SoftArea data={userChart} color="oklch(0.6 0.15 300)" height={170} />
         </Panel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-2">
         <Panel
           title="Recent activity"
           action={
@@ -180,11 +194,11 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
           ) : (d?.activities.length ?? 0) === 0 ? (
             <Empty>No activity yet.</Empty>
           ) : (
-            <ul className={`space-y-2 ${showAll ? "max-h-[480px] overflow-y-auto pr-1" : ""}`}>
+            <ul className={`space-y-1.5 ${showAll ? "max-h-[480px] overflow-y-auto pr-1" : ""}`}>
               {(showAll ? d?.activities : d?.activities.slice(0, 12))?.map((a) => {
                 const person = profilesById.get(a.user_id);
                 return (
-                  <li key={a.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white/60 px-3 py-2">
+                  <li key={a.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/60 px-3 py-1.5">
                     <span className="min-w-0 text-[13px]">
                       <span className="block truncate font-semibold">{person?.display_name ?? person?.email ?? "Signed-in user"}</span>
                       <span className="block truncate opacity-70">
@@ -200,20 +214,28 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
         </Panel>
 
         <Panel title="Shortcuts">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { t: "Upload a movie", i: Film, tab: "content" as AdminTab },
               { t: "Add episodes", i: Tv, tab: "content" as AdminTab },
               { t: "Users & subscriptions", i: Users, tab: "users" as AdminTab },
-              ...(limited ? [] : [{ t: "Withdraw money", i: Wallet, tab: "wallet" as AdminTab }]),
+              ...(limited
+                ? []
+                : [
+                    { t: "Withdraw money", i: Wallet, tab: "wallet" as AdminTab },
+                    { t: "Insights", i: Activity, tab: "insights" as AdminTab },
+                    { t: "Expiring members", i: Crown, tab: "members" as AdminTab },
+                    { t: "Download reports", i: Film, tab: "reports" as AdminTab },
+                    { t: "System health", i: Activity, tab: "system" as AdminTab },
+                  ]),
             ].map((s) => (
               <button
                 key={s.t}
                 type="button"
                 onClick={() => go(s.tab)}
-                className="flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-3 text-left text-[13px] font-semibold ring-1 ring-black/5 transition hover:bg-white"
+                className="flex items-center gap-2 rounded-xl bg-white/70 px-2.5 py-2 text-left text-[12.5px] font-semibold ring-1 ring-black/5 transition hover:bg-white"
               >
-                <span className="grid size-9 place-items-center rounded-2xl bg-[linear-gradient(120deg,oklch(0.95_0.06_90),oklch(0.9_0.1_60))]">
+                <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-[linear-gradient(120deg,oklch(0.95_0.06_90),oklch(0.9_0.1_60))]">
                   <s.i className="size-4" />
                 </span>
                 {s.t}

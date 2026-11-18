@@ -58,7 +58,7 @@ export function TeamTab() {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <Panel title="Add a team admin">
         <p className="mb-3 text-[12px] opacity-65">
           Team admins can upload movies, series and episodes, add hero slides, view users, activate or

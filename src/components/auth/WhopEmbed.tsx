@@ -55,7 +55,7 @@ export default function WhopEmbed({
           setOpen(true);
         }}
         aria-label="Pay with card"
-        className="flex min-h-11 w-full items-center justify-center gap-2.5 overflow-hidden rounded-md bg-foreground px-4 text-[15px] font-bold text-background transition hover:opacity-90"
+        className="flex min-h-11 w-full items-center justify-center gap-2.5 overflow-hidden rounded-md bg-paypal-gold px-4 text-[15px] font-extrabold text-paypal-navy transition hover:bg-paypal-gold-hover"
       >
         <CreditCard className="size-5 shrink-0" />
         <span>Pay with card</span>

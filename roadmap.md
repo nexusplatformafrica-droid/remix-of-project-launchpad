@@ -90,3 +90,9 @@
 - [x] Card button sized like PayPal without the Whop name; developer plans at the top; fix developer-plan card checkout (30-char title); /doc assistant works on own deployments; outside agents open as links; coloured Dashboard and new Live TV header buttons.
 
 - [x] Live TV button opens livetv.luofilm.site; floating MOVIE MAX TV banner (Watch now + Android app download) after the WhatsApp prompt.
+
+## Admin dashboard upgrade (Nov 2026)
+- [x] PayPal colours (gold/blue) for wallet balance, transactions and the Pay with card button.
+- [x] Compact admin dashboard with new tools: Insights, Members (expiring/win-back), Reports (CSV), System health, quick search (Ctrl+K), today strip.
+- [x] Balances for every payment service: mobile money (withdraw), Whop real balance + withdraw, PayPal balance + withdraw once PayPal approves payouts.
+- [ ] Verify live pawaPay/Whop/PayPal balances and a real payout signed in as admin (blocked: no signed-in Firebase admin session; PayPal needs Payouts/balance access approved).
