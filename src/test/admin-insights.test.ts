@@ -70,3 +70,38 @@ describe("payment problems and goals", () => {
     expect(g.perDayNeeded).toBe(11539);
   });
 });
+
+import { renewalForecast } from "@/lib/admin-insights";
+import { liveAnnouncement } from "@/lib/announcement";
+
+describe("renewal forecast", () => {
+  it("multiplies memberships ending soon by the past renewal rate", () => {
+    const subs = [
+      { user_id: "a", status: "active", amount: 10000, expires_at: iso(now + 5 * DAY_MS), created_at: iso(now - 25 * DAY_MS) },
+      { user_id: "b", status: "active", amount: 20000, expires_at: iso(now + 40 * DAY_MS), created_at: iso(now - 1 * DAY_MS) },
+      // lapsed and renewed
+      { user_id: "c", status: "expired", amount: 5000, expires_at: iso(now - 10 * DAY_MS), created_at: iso(now - 40 * DAY_MS) },
+      { user_id: "c", status: "active", amount: 5000, expires_at: iso(now + 60 * DAY_MS), created_at: iso(now - 9 * DAY_MS) },
+      // lapsed, never came back
+      { user_id: "d", status: "expired", amount: 5000, expires_at: iso(now - 20 * DAY_MS), created_at: iso(now - 50 * DAY_MS) },
+    ];
+    const f = renewalForecast(subs, 30, now);
+    expect(f.due).toBe(1);
+    expect(f.dueAmount).toBe(10000);
+    expect(f.rate).toBe(0.5);
+    expect(f.expected).toBe(5000);
+  });
+});
+
+describe("announcement bar", () => {
+  it("hides when off, empty or past its end date", () => {
+    expect(liveAnnouncement({ id: "1", on: false, text: "Hi" }, now)).toBeNull();
+    expect(liveAnnouncement({ id: "1", on: true, text: "  " }, now)).toBeNull();
+    expect(liveAnnouncement({ id: "1", on: true, text: "Hi", until: iso(now - 1000) }, now)).toBeNull();
+    expect(liveAnnouncement({ id: "1", on: true, text: "Hi", until: iso(now + 1000) }, now)?.text).toBe("Hi");
+  });
+  it("drops unsafe links", () => {
+    expect(liveAnnouncement({ id: "1", on: true, text: "Hi", linkUrl: "javascript:alert(1)" }, now)?.linkUrl).toBeUndefined();
+    expect(liveAnnouncement({ id: "1", on: true, text: "Hi", linkUrl: "/pay" }, now)?.linkUrl).toBe("/pay");
+  });
+});

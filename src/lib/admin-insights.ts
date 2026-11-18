@@ -169,3 +169,22 @@ export function goalProgress(tx: TxLike[], goal: number, now = Date.now()) {
     perDayNeeded: Math.max(0, Math.ceil((goal - earned) / daysLeft)),
   };
 }
+
+type SubWithAmount = SubLike & { amount?: number | string | null };
+
+/**
+ * Expected renewal money for the next `days`: memberships ending in that window,
+ * times how often people who lapsed in the last 90 days bought again.
+ */
+export function renewalForecast(subs: SubWithAmount[], days = 30, now = Date.now()) {
+  const end = now + days * DAY_MS;
+  const active = (s: SubLike) => String(s.status).toLowerCase() === "active";
+  const due = subs.filter((s) => active(s) && s.expires_at && new Date(s.expires_at).getTime() > now && new Date(s.expires_at).getTime() <= end);
+  const dueAmount = due.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const lapsed = subs.filter((s) => s.expires_at && s.user_id && new Date(s.expires_at).getTime() <= now && new Date(s.expires_at).getTime() > now - 90 * DAY_MS);
+  const renewed = lapsed.filter((s) =>
+    subs.some((o) => o !== s && o.user_id === s.user_id && o.created_at && s.created_at && o.created_at > s.created_at),
+  );
+  const rate = lapsed.length ? renewed.length / lapsed.length : 0;
+  return { due: due.length, dueAmount, rate, expected: Math.round(dueAmount * rate) };
+}

@@ -21,6 +21,7 @@ import { ReferralTracker } from "@/components/youku/ReferralTracker";
 import { DownloadTour } from "@/components/luo/DownloadTour";
 import { LiveSync } from "@/components/LiveSync";
 import { RouteProgress } from "@/components/youku/RouteProgress";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { ActivityTracker } from "@/components/ActivityTracker";
 import { PaymentKeepAlive } from "@/components/PaymentKeepAlive";
 import { UploadFloat } from "@/components/admin/UploadFloat";
@@ -168,6 +169,7 @@ function RootComponent() {
       <LiveSync />
       <PaymentKeepAlive />
       <RouteProgress />
+      <AnnouncementBar />
       <AuthProvider>
         <UploadFloat />
         <ActivityTracker />

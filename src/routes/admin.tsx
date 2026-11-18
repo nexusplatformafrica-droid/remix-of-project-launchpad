@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fdb } from "@/lib/fdb";
 import { TeamTab } from "@/components/admin/TeamTab";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { UserCog, LayoutDashboard, Users, Film, Wallet, Settings, ShieldCheck, MessageCircle, Sparkles, MonitorPlay, Music2, MicVocal, LineChart, Crown, FileSpreadsheet, HeartPulse, Search, RefreshCw } from "lucide-react";
+import { UserCog, LayoutDashboard, Users, Film, Wallet, Settings, ShieldCheck, MessageCircle, Sparkles, MonitorPlay, Music2, MicVocal, LineChart, Crown, FileSpreadsheet, HeartPulse, Search, RefreshCw, Wand2 } from "lucide-react";
 import { Sidebar } from "@/components/youku/Sidebar";
 import { TopBar } from "@/components/youku/TopBar";
 import { MobileNav } from "@/components/youku/MobileNav";
@@ -23,6 +23,7 @@ import { InsightsTab } from "@/components/admin/InsightsTab";
 import { MembersTab } from "@/components/admin/MembersTab";
 import { ReportsTab } from "@/components/admin/ReportsTab";
 import { SystemTab } from "@/components/admin/SystemTab";
+import { ToolsTab } from "@/components/admin/ToolsTab";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandShortcut } from "@/components/ui/command";
 import { SOFT_BG } from "@/components/admin/ui";
 
@@ -58,6 +59,7 @@ export const Route = createFileRoute("/admin")({
 const TABS: { k: AdminTab; t: string; i: typeof Users }[] = [
   { k: "overview", t: "Overview", i: LayoutDashboard },
   { k: "insights", t: "Insights", i: LineChart },
+  { k: "tools", t: "Special tools", i: Wand2 },
   { k: "wallet", t: "Wallet", i: Wallet },
   { k: "members", t: "Members", i: Crown },
   { k: "users", t: "Users", i: Users },
@@ -174,6 +176,7 @@ function AdminPage() {
                   {isAdmin && current === "members" && <MembersTab />}
                   {isAdmin && current === "reports" && <ReportsTab />}
                   {isAdmin && current === "system" && <SystemTab />}
+                  {isAdmin && current === "tools" && <ToolsTab />}
                   {current === "users" && <UsersTab />}
                   {current === "content" && <ContentTab userId={user.id} restricted={isStaff} />}
                   {current === "hero" && <HeroTab />}

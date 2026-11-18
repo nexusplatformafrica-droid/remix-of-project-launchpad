@@ -10,7 +10,7 @@ import { revenueWindows, startOfDay, expiringWithin } from "@/lib/admin-insights
 import { Empty, MiniStat, Panel, SoftArea, Stat } from "./ui";
 import { OnlineNow, RevenueGoal } from "./SpecialPanels";
 
-export type AdminTab = "overview" | "insights" | "members" | "reports" | "system" | "users" | "content" | "hero" | "mhero" | "artists" | "notify" | "wallet" | "settings" | "team" | "channels";
+export type AdminTab = "overview" | "insights" | "members" | "reports" | "system" | "users" | "content" | "hero" | "mhero" | "artists" | "notify" | "wallet" | "settings" | "team" | "channels" | "tools";
 
 /** Everything the overview, insights, members and reports tools read — one cached load. */
 export async function loadOverview() {
