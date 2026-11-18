@@ -1,0 +1,2 @@
+# MovieBox homepage feed
+- Append MovieBox's web suggestions pager below the existing home sections, using browser-first requests with the existing server fallback. Why: scrolling must retain exact upstream titles and continuation pages.

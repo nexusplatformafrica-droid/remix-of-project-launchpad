@@ -1,0 +1,160 @@
+/**
+ * Catalog access layer.
+ *
+ * Catalog calls stay server-side because the upstream rejects browser origins.
+ */
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { resolveWatchId } from "./watch-links";
+import {
+  fetchAudioVariants,
+  fetchDetails,
+  fetchRelated,
+  fetchHome,
+  fetchHomeFeed,
+  fetchMostTrending,
+  fetchSources,
+  searchCatalog,
+  unavailableTitle,
+  type AudioVariant,
+  type CatalogItem,
+  type StreamSource,
+  type TitleDetails,
+} from "./moviebox";
+
+
+export type HomeData = {
+  hero: CatalogItem[];
+  rows: { title: string; items: CatalogItem[] }[];
+  trending?: CatalogItem[];
+  comingSoon?: CatalogItem[];
+  degraded?: boolean;
+  /** True when rows are the MovieBox website's own home sections. */
+  web?: boolean;
+};
+
+// A transient upstream failure must not replace real web sections with an empty page.
+// Worker instances may come and go, so this is only a short-lived resilience cache.
+let lastGoodWebHome: { value: HomeData; at: number } | null = null;
+
+export const getHome = createServerFn({ method: "GET" }).handler(async (): Promise<HomeData> => {
+  try {
+    const home = await fetchHome();
+    if (!home.rows.length) throw new Error("Web home returned no sections");
+    lastGoodWebHome = { value: home, at: Date.now() };
+    return home;
+  } catch (error) {
+    console.error(error);
+    if (lastGoodWebHome && Date.now() - lastGoodWebHome.at < 15 * 60_000) {
+      return { ...lastGoodWebHome.value, degraded: true };
+    }
+    throw new Error("MovieBox web sections are temporarily unavailable");
+  }
+});
+
+export const getHomeFeed = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ page: z.number().int().min(0).max(100_000) }).parse(data))
+  .handler(async ({ data }) => fetchHomeFeed(data.page));
+
+export const searchTitles = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ q: z.string(), page: z.number().optional() }).parse(data))
+  .handler(async ({ data }): Promise<CatalogItem[]> => {
+    try {
+      return await searchCatalog(data.q, data.page ?? 1);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  });
+
+export const getTitle = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
+  .handler(async ({ data }): Promise<TitleDetails & { unavailable?: boolean }> => {
+    try {
+      const id = await resolveWatchId(data.id, searchCatalog);
+      return await fetchDetails(id);
+    } catch (error) {
+      console.error(error);
+      return unavailableTitle(data.id);
+    }
+  });
+
+export const getSources = createServerFn({ method: "GET" })
+  .inputValidator((data) =>
+    z
+      .object({ id: z.string().regex(/^\d{1,80}$/), season: z.number().int().min(0).optional(), episode: z.number().int().min(0).optional(), detailPath: z.string().max(300).optional() })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<StreamSource[]> => {
+    try {
+      return await fetchSources(data.id, data.season ?? 0, data.episode ?? 0, data.detailPath);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  });
+
+export const getRelated = createServerFn({ method: "GET" })
+  .inputValidator((data) =>
+    z
+      .object({
+        id: z.string(),
+        title: z.string(),
+        genre: z.string().nullable(),
+        type: z.enum(["movie", "series"]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<CatalogItem[]> => {
+    try {
+      return await fetchRelated(data);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  });
+
+export const getAudioVariants = createServerFn({ method: "GET" })
+  .inputValidator((data) =>
+    z.object({ id: z.string(), title: z.string(), type: z.enum(["movie", "series"]) }).parse(data),
+  )
+  .handler(async ({ data }): Promise<AudioVariant[]> => {
+    try {
+      return await fetchAudioVariants(data);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  });
+
+/**
+ * Trending rail: the catalog's own live trending rails from the home, movie and
+ * series tabs merged together, so it never falls back to a thin, regional list.
+ */
+export const getTrending = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CatalogItem[]> => {
+    try {
+      return await fetchMostTrending();
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  },
+);
+
+/**
+ * One curated home rail, resolved on the server. The catalog gateway blocks
+ * browser origins, so the client only sends the rail's title and the real
+ * section definition (including its genre filters) stays server-side.
+ */
+export const getSection = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ title: z.string().min(1).max(120) }).parse(data))
+  .handler(async ({ data }): Promise<CatalogItem[]> => {
+    try {
+      const home = await fetchHome();
+      return home.rows.find((row) => row.title.toLowerCase() === data.title.toLowerCase())?.items ?? [];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  });

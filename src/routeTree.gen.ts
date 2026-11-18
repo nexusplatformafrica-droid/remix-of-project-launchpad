@@ -10,33 +10,632 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ChannelsRouteImport } from './routes/channels'
+import { Route as DeveloperRouteImport } from './routes/developer'
+import { Route as DocRouteImport } from './routes/doc'
+import { Route as DocDotmdRouteImport } from './routes/doc[.]md'
+import { Route as MusicRouteImport } from './routes/music'
+import { Route as PlansRouteImport } from './routes/plans'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SitemapAnimationsDotxmlRouteImport } from './routes/sitemap-animations[.]xml'
+import { Route as SitemapChannelsDotxmlRouteImport } from './routes/sitemap-channels[.]xml'
+import { Route as SitemapImagesDotxmlRouteImport } from './routes/sitemap-images[.]xml'
+import { Route as SitemapLugandaMoviesDotxmlRouteImport } from './routes/sitemap-luganda-movies[.]xml'
+import { Route as SitemapLuoMoviesDotxmlRouteImport } from './routes/sitemap-luo-movies[.]xml'
+import { Route as SitemapMoviesDotxmlRouteImport } from './routes/sitemap-movies[.]xml'
+import { Route as SitemapMusicDotxmlRouteImport } from './routes/sitemap-music[.]xml'
+import { Route as SitemapPagesDotxmlRouteImport } from './routes/sitemap-pages[.]xml'
+import { Route as SitemapSeriesDotxmlRouteImport } from './routes/sitemap-series[.]xml'
+import { Route as SitemapVideosDotxmlRouteImport } from './routes/sitemap-videos[.]xml'
+import { Route as SitemapVjDotxmlRouteImport } from './routes/sitemap-vj[.]xml'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TutorialRouteImport } from './routes/tutorial'
+import { Route as ApiDocChatRouteImport } from './routes/api/doc-chat'
+import { Route as ArtistIdRouteImport } from './routes/artist.$id'
+import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as ChannelIdRouteImport } from './routes/channel.$id'
+import { Route as DocIndexRouteImport } from './routes/doc.index'
+import { Route as DocSlugRouteImport } from './routes/doc.$slug'
+import { Route as LugandaIndexRouteImport } from './routes/luganda.index'
+import { Route as LugandaIdRouteImport } from './routes/luganda.$id'
+import { Route as LuoIndexRouteImport } from './routes/luo.index'
+import { Route as LuoIdRouteImport } from './routes/luo.$id'
+import { Route as MusicArtistSlugRouteImport } from './routes/music-artist.$slug'
+import { Route as PayIdRouteImport } from './routes/pay.$id'
+import { Route as TesoIndexRouteImport } from './routes/teso.index'
+import { Route as TesoIdRouteImport } from './routes/teso.$id'
+import { Route as WatchIdRouteImport } from './routes/watch.$id'
+import { Route as ApiPublicAdminUploadRouteImport } from './routes/api/public/admin-upload'
+import { Route as ApiPublicMovieRouteImport } from './routes/api/public/movie'
+import { Route as ApiPublicSongRouteImport } from './routes/api/public/song'
+import { Route as ApiPublicStreamRouteImport } from './routes/api/public/stream'
+import { Route as ApiPublicSubtitleRouteImport } from './routes/api/public/subtitle'
+import { Route as PProviderIndexRouteImport } from './routes/p.$provider.index'
+import { Route as PProviderIdRouteImport } from './routes/p.$provider.$id'
+import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
+import { Route as LugandaNaraboxKindIdRouteImport } from './routes/luganda.narabox.$kind.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChannelsRoute = ChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeveloperRoute = DeveloperRouteImport.update({
+  id: '/developer',
+  path: '/developer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocRoute = DocRouteImport.update({
+  id: '/doc',
+  path: '/doc',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocDotmdRoute = DocDotmdRouteImport.update({
+  id: '/doc.md',
+  path: '/doc.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicRoute = MusicRouteImport.update({
+  id: '/music',
+  path: '/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapAnimationsDotxmlRoute = SitemapAnimationsDotxmlRouteImport.update({
+  id: '/sitemap-animations.xml',
+  path: '/sitemap-animations.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapChannelsDotxmlRoute = SitemapChannelsDotxmlRouteImport.update({
+  id: '/sitemap-channels.xml',
+  path: '/sitemap-channels.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapImagesDotxmlRoute = SitemapImagesDotxmlRouteImport.update({
+  id: '/sitemap-images.xml',
+  path: '/sitemap-images.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapLugandaMoviesDotxmlRoute =
+  SitemapLugandaMoviesDotxmlRouteImport.update({
+    id: '/sitemap-luganda-movies.xml',
+    path: '/sitemap-luganda-movies.xml',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SitemapLuoMoviesDotxmlRoute = SitemapLuoMoviesDotxmlRouteImport.update({
+  id: '/sitemap-luo-movies.xml',
+  path: '/sitemap-luo-movies.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapMoviesDotxmlRoute = SitemapMoviesDotxmlRouteImport.update({
+  id: '/sitemap-movies.xml',
+  path: '/sitemap-movies.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapMusicDotxmlRoute = SitemapMusicDotxmlRouteImport.update({
+  id: '/sitemap-music.xml',
+  path: '/sitemap-music.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapPagesDotxmlRoute = SitemapPagesDotxmlRouteImport.update({
+  id: '/sitemap-pages.xml',
+  path: '/sitemap-pages.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapSeriesDotxmlRoute = SitemapSeriesDotxmlRouteImport.update({
+  id: '/sitemap-series.xml',
+  path: '/sitemap-series.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapVideosDotxmlRoute = SitemapVideosDotxmlRouteImport.update({
+  id: '/sitemap-videos.xml',
+  path: '/sitemap-videos.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapVjDotxmlRoute = SitemapVjDotxmlRouteImport.update({
+  id: '/sitemap-vj.xml',
+  path: '/sitemap-vj.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TutorialRoute = TutorialRouteImport.update({
+  id: '/tutorial',
+  path: '/tutorial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDocChatRoute = ApiDocChatRouteImport.update({
+  id: '/api/doc-chat',
+  path: '/api/doc-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistIdRoute = ArtistIdRouteImport.update({
+  id: '/artist/$id',
+  path: '/artist/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategorySlugRoute = CategorySlugRouteImport.update({
+  id: '/category/$slug',
+  path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChannelIdRoute = ChannelIdRouteImport.update({
+  id: '/channel/$id',
+  path: '/channel/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocIndexRoute = DocIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DocRoute,
+} as any)
+const DocSlugRoute = DocSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => DocRoute,
+} as any)
+const LugandaIndexRoute = LugandaIndexRouteImport.update({
+  id: '/luganda/',
+  path: '/luganda/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LugandaIdRoute = LugandaIdRouteImport.update({
+  id: '/luganda/$id',
+  path: '/luganda/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LuoIndexRoute = LuoIndexRouteImport.update({
+  id: '/luo/',
+  path: '/luo/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LuoIdRoute = LuoIdRouteImport.update({
+  id: '/luo/$id',
+  path: '/luo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicArtistSlugRoute = MusicArtistSlugRouteImport.update({
+  id: '/music-artist/$slug',
+  path: '/music-artist/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayIdRoute = PayIdRouteImport.update({
+  id: '/pay/$id',
+  path: '/pay/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TesoIndexRoute = TesoIndexRouteImport.update({
+  id: '/teso/',
+  path: '/teso/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TesoIdRoute = TesoIdRouteImport.update({
+  id: '/teso/$id',
+  path: '/teso/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchIdRoute = WatchIdRouteImport.update({
+  id: '/watch/$id',
+  path: '/watch/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAdminUploadRoute = ApiPublicAdminUploadRouteImport.update({
+  id: '/api/public/admin-upload',
+  path: '/api/public/admin-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMovieRoute = ApiPublicMovieRouteImport.update({
+  id: '/api/public/movie',
+  path: '/api/public/movie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSongRoute = ApiPublicSongRouteImport.update({
+  id: '/api/public/song',
+  path: '/api/public/song',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicStreamRoute = ApiPublicStreamRouteImport.update({
+  id: '/api/public/stream',
+  path: '/api/public/stream',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSubtitleRoute = ApiPublicSubtitleRouteImport.update({
+  id: '/api/public/subtitle',
+  path: '/api/public/subtitle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PProviderIndexRoute = PProviderIndexRouteImport.update({
+  id: '/p/$provider/',
+  path: '/p/$provider/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PProviderIdRoute = PProviderIdRouteImport.update({
+  id: '/p/$provider/$id',
+  path: '/p/$provider/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
+  id: '/api/public/v1/$',
+  path: '/api/public/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LugandaNaraboxKindIdRoute = LugandaNaraboxKindIdRouteImport.update({
+  id: '/luganda/narabox/$kind/$id',
+  path: '/luganda/narabox/$kind/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/channels': typeof ChannelsRoute
+  '/developer': typeof DeveloperRoute
+  '/doc': typeof DocRouteWithChildren
+  '/doc.md': typeof DocDotmdRoute
+  '/music': typeof MusicRoute
+  '/plans': typeof PlansRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/sitemap-animations.xml': typeof SitemapAnimationsDotxmlRoute
+  '/sitemap-channels.xml': typeof SitemapChannelsDotxmlRoute
+  '/sitemap-images.xml': typeof SitemapImagesDotxmlRoute
+  '/sitemap-luganda-movies.xml': typeof SitemapLugandaMoviesDotxmlRoute
+  '/sitemap-luo-movies.xml': typeof SitemapLuoMoviesDotxmlRoute
+  '/sitemap-movies.xml': typeof SitemapMoviesDotxmlRoute
+  '/sitemap-music.xml': typeof SitemapMusicDotxmlRoute
+  '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
+  '/sitemap-series.xml': typeof SitemapSeriesDotxmlRoute
+  '/sitemap-videos.xml': typeof SitemapVideosDotxmlRoute
+  '/sitemap-vj.xml': typeof SitemapVjDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tutorial': typeof TutorialRoute
+  '/api/doc-chat': typeof ApiDocChatRoute
+  '/artist/$id': typeof ArtistIdRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/channel/$id': typeof ChannelIdRoute
+  '/doc/$slug': typeof DocSlugRoute
+  '/luganda/$id': typeof LugandaIdRoute
+  '/luo/$id': typeof LuoIdRoute
+  '/music-artist/$slug': typeof MusicArtistSlugRoute
+  '/pay/$id': typeof PayIdRoute
+  '/teso/$id': typeof TesoIdRoute
+  '/watch/$id': typeof WatchIdRoute
+  '/doc/': typeof DocIndexRoute
+  '/luganda/': typeof LugandaIndexRoute
+  '/luo/': typeof LuoIndexRoute
+  '/teso/': typeof TesoIndexRoute
+  '/api/public/admin-upload': typeof ApiPublicAdminUploadRoute
+  '/api/public/movie': typeof ApiPublicMovieRoute
+  '/api/public/song': typeof ApiPublicSongRoute
+  '/api/public/stream': typeof ApiPublicStreamRoute
+  '/api/public/subtitle': typeof ApiPublicSubtitleRoute
+  '/p/$provider/$id': typeof PProviderIdRoute
+  '/p/$provider/': typeof PProviderIndexRoute
+  '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/luganda/narabox/$kind/$id': typeof LugandaNaraboxKindIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/channels': typeof ChannelsRoute
+  '/developer': typeof DeveloperRoute
+  '/doc.md': typeof DocDotmdRoute
+  '/music': typeof MusicRoute
+  '/plans': typeof PlansRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/sitemap-animations.xml': typeof SitemapAnimationsDotxmlRoute
+  '/sitemap-channels.xml': typeof SitemapChannelsDotxmlRoute
+  '/sitemap-images.xml': typeof SitemapImagesDotxmlRoute
+  '/sitemap-luganda-movies.xml': typeof SitemapLugandaMoviesDotxmlRoute
+  '/sitemap-luo-movies.xml': typeof SitemapLuoMoviesDotxmlRoute
+  '/sitemap-movies.xml': typeof SitemapMoviesDotxmlRoute
+  '/sitemap-music.xml': typeof SitemapMusicDotxmlRoute
+  '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
+  '/sitemap-series.xml': typeof SitemapSeriesDotxmlRoute
+  '/sitemap-videos.xml': typeof SitemapVideosDotxmlRoute
+  '/sitemap-vj.xml': typeof SitemapVjDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tutorial': typeof TutorialRoute
+  '/api/doc-chat': typeof ApiDocChatRoute
+  '/artist/$id': typeof ArtistIdRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/channel/$id': typeof ChannelIdRoute
+  '/doc/$slug': typeof DocSlugRoute
+  '/luganda/$id': typeof LugandaIdRoute
+  '/luo/$id': typeof LuoIdRoute
+  '/music-artist/$slug': typeof MusicArtistSlugRoute
+  '/pay/$id': typeof PayIdRoute
+  '/teso/$id': typeof TesoIdRoute
+  '/watch/$id': typeof WatchIdRoute
+  '/doc': typeof DocIndexRoute
+  '/luganda': typeof LugandaIndexRoute
+  '/luo': typeof LuoIndexRoute
+  '/teso': typeof TesoIndexRoute
+  '/api/public/admin-upload': typeof ApiPublicAdminUploadRoute
+  '/api/public/movie': typeof ApiPublicMovieRoute
+  '/api/public/song': typeof ApiPublicSongRoute
+  '/api/public/stream': typeof ApiPublicStreamRoute
+  '/api/public/subtitle': typeof ApiPublicSubtitleRoute
+  '/p/$provider/$id': typeof PProviderIdRoute
+  '/p/$provider': typeof PProviderIndexRoute
+  '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/luganda/narabox/$kind/$id': typeof LugandaNaraboxKindIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/channels': typeof ChannelsRoute
+  '/developer': typeof DeveloperRoute
+  '/doc': typeof DocRouteWithChildren
+  '/doc.md': typeof DocDotmdRoute
+  '/music': typeof MusicRoute
+  '/plans': typeof PlansRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/sitemap-animations.xml': typeof SitemapAnimationsDotxmlRoute
+  '/sitemap-channels.xml': typeof SitemapChannelsDotxmlRoute
+  '/sitemap-images.xml': typeof SitemapImagesDotxmlRoute
+  '/sitemap-luganda-movies.xml': typeof SitemapLugandaMoviesDotxmlRoute
+  '/sitemap-luo-movies.xml': typeof SitemapLuoMoviesDotxmlRoute
+  '/sitemap-movies.xml': typeof SitemapMoviesDotxmlRoute
+  '/sitemap-music.xml': typeof SitemapMusicDotxmlRoute
+  '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
+  '/sitemap-series.xml': typeof SitemapSeriesDotxmlRoute
+  '/sitemap-videos.xml': typeof SitemapVideosDotxmlRoute
+  '/sitemap-vj.xml': typeof SitemapVjDotxmlRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tutorial': typeof TutorialRoute
+  '/api/doc-chat': typeof ApiDocChatRoute
+  '/artist/$id': typeof ArtistIdRoute
+  '/category/$slug': typeof CategorySlugRoute
+  '/channel/$id': typeof ChannelIdRoute
+  '/doc/$slug': typeof DocSlugRoute
+  '/luganda/$id': typeof LugandaIdRoute
+  '/luo/$id': typeof LuoIdRoute
+  '/music-artist/$slug': typeof MusicArtistSlugRoute
+  '/pay/$id': typeof PayIdRoute
+  '/teso/$id': typeof TesoIdRoute
+  '/watch/$id': typeof WatchIdRoute
+  '/doc/': typeof DocIndexRoute
+  '/luganda/': typeof LugandaIndexRoute
+  '/luo/': typeof LuoIndexRoute
+  '/teso/': typeof TesoIndexRoute
+  '/api/public/admin-upload': typeof ApiPublicAdminUploadRoute
+  '/api/public/movie': typeof ApiPublicMovieRoute
+  '/api/public/song': typeof ApiPublicSongRoute
+  '/api/public/stream': typeof ApiPublicStreamRoute
+  '/api/public/subtitle': typeof ApiPublicSubtitleRoute
+  '/p/$provider/$id': typeof PProviderIdRoute
+  '/p/$provider/': typeof PProviderIndexRoute
+  '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/luganda/narabox/$kind/$id': typeof LugandaNaraboxKindIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/channels'
+    | '/developer'
+    | '/doc'
+    | '/doc.md'
+    | '/music'
+    | '/plans'
+    | '/profile'
+    | '/search'
+    | '/sitemap-animations.xml'
+    | '/sitemap-channels.xml'
+    | '/sitemap-images.xml'
+    | '/sitemap-luganda-movies.xml'
+    | '/sitemap-luo-movies.xml'
+    | '/sitemap-movies.xml'
+    | '/sitemap-music.xml'
+    | '/sitemap-pages.xml'
+    | '/sitemap-series.xml'
+    | '/sitemap-videos.xml'
+    | '/sitemap-vj.xml'
+    | '/sitemap.xml'
+    | '/tutorial'
+    | '/api/doc-chat'
+    | '/artist/$id'
+    | '/category/$slug'
+    | '/channel/$id'
+    | '/doc/$slug'
+    | '/luganda/$id'
+    | '/luo/$id'
+    | '/music-artist/$slug'
+    | '/pay/$id'
+    | '/teso/$id'
+    | '/watch/$id'
+    | '/doc/'
+    | '/luganda/'
+    | '/luo/'
+    | '/teso/'
+    | '/api/public/admin-upload'
+    | '/api/public/movie'
+    | '/api/public/song'
+    | '/api/public/stream'
+    | '/api/public/subtitle'
+    | '/p/$provider/$id'
+    | '/p/$provider/'
+    | '/api/public/v1/$'
+    | '/luganda/narabox/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/channels'
+    | '/developer'
+    | '/doc.md'
+    | '/music'
+    | '/plans'
+    | '/profile'
+    | '/search'
+    | '/sitemap-animations.xml'
+    | '/sitemap-channels.xml'
+    | '/sitemap-images.xml'
+    | '/sitemap-luganda-movies.xml'
+    | '/sitemap-luo-movies.xml'
+    | '/sitemap-movies.xml'
+    | '/sitemap-music.xml'
+    | '/sitemap-pages.xml'
+    | '/sitemap-series.xml'
+    | '/sitemap-videos.xml'
+    | '/sitemap-vj.xml'
+    | '/sitemap.xml'
+    | '/tutorial'
+    | '/api/doc-chat'
+    | '/artist/$id'
+    | '/category/$slug'
+    | '/channel/$id'
+    | '/doc/$slug'
+    | '/luganda/$id'
+    | '/luo/$id'
+    | '/music-artist/$slug'
+    | '/pay/$id'
+    | '/teso/$id'
+    | '/watch/$id'
+    | '/doc'
+    | '/luganda'
+    | '/luo'
+    | '/teso'
+    | '/api/public/admin-upload'
+    | '/api/public/movie'
+    | '/api/public/song'
+    | '/api/public/stream'
+    | '/api/public/subtitle'
+    | '/p/$provider/$id'
+    | '/p/$provider'
+    | '/api/public/v1/$'
+    | '/luganda/narabox/$kind/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/channels'
+    | '/developer'
+    | '/doc'
+    | '/doc.md'
+    | '/music'
+    | '/plans'
+    | '/profile'
+    | '/search'
+    | '/sitemap-animations.xml'
+    | '/sitemap-channels.xml'
+    | '/sitemap-images.xml'
+    | '/sitemap-luganda-movies.xml'
+    | '/sitemap-luo-movies.xml'
+    | '/sitemap-movies.xml'
+    | '/sitemap-music.xml'
+    | '/sitemap-pages.xml'
+    | '/sitemap-series.xml'
+    | '/sitemap-videos.xml'
+    | '/sitemap-vj.xml'
+    | '/sitemap.xml'
+    | '/tutorial'
+    | '/api/doc-chat'
+    | '/artist/$id'
+    | '/category/$slug'
+    | '/channel/$id'
+    | '/doc/$slug'
+    | '/luganda/$id'
+    | '/luo/$id'
+    | '/music-artist/$slug'
+    | '/pay/$id'
+    | '/teso/$id'
+    | '/watch/$id'
+    | '/doc/'
+    | '/luganda/'
+    | '/luo/'
+    | '/teso/'
+    | '/api/public/admin-upload'
+    | '/api/public/movie'
+    | '/api/public/song'
+    | '/api/public/stream'
+    | '/api/public/subtitle'
+    | '/p/$provider/$id'
+    | '/p/$provider/'
+    | '/api/public/v1/$'
+    | '/luganda/narabox/$kind/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ChannelsRoute: typeof ChannelsRoute
+  DeveloperRoute: typeof DeveloperRoute
+  DocRoute: typeof DocRouteWithChildren
+  DocDotmdRoute: typeof DocDotmdRoute
+  MusicRoute: typeof MusicRoute
+  PlansRoute: typeof PlansRoute
+  ProfileRoute: typeof ProfileRoute
+  SearchRoute: typeof SearchRoute
+  SitemapAnimationsDotxmlRoute: typeof SitemapAnimationsDotxmlRoute
+  SitemapChannelsDotxmlRoute: typeof SitemapChannelsDotxmlRoute
+  SitemapImagesDotxmlRoute: typeof SitemapImagesDotxmlRoute
+  SitemapLugandaMoviesDotxmlRoute: typeof SitemapLugandaMoviesDotxmlRoute
+  SitemapLuoMoviesDotxmlRoute: typeof SitemapLuoMoviesDotxmlRoute
+  SitemapMoviesDotxmlRoute: typeof SitemapMoviesDotxmlRoute
+  SitemapMusicDotxmlRoute: typeof SitemapMusicDotxmlRoute
+  SitemapPagesDotxmlRoute: typeof SitemapPagesDotxmlRoute
+  SitemapSeriesDotxmlRoute: typeof SitemapSeriesDotxmlRoute
+  SitemapVideosDotxmlRoute: typeof SitemapVideosDotxmlRoute
+  SitemapVjDotxmlRoute: typeof SitemapVjDotxmlRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TutorialRoute: typeof TutorialRoute
+  ApiDocChatRoute: typeof ApiDocChatRoute
+  ArtistIdRoute: typeof ArtistIdRoute
+  CategorySlugRoute: typeof CategorySlugRoute
+  ChannelIdRoute: typeof ChannelIdRoute
+  LugandaIdRoute: typeof LugandaIdRoute
+  LuoIdRoute: typeof LuoIdRoute
+  MusicArtistSlugRoute: typeof MusicArtistSlugRoute
+  PayIdRoute: typeof PayIdRoute
+  TesoIdRoute: typeof TesoIdRoute
+  WatchIdRoute: typeof WatchIdRoute
+  LugandaIndexRoute: typeof LugandaIndexRoute
+  LuoIndexRoute: typeof LuoIndexRoute
+  TesoIndexRoute: typeof TesoIndexRoute
+  ApiPublicAdminUploadRoute: typeof ApiPublicAdminUploadRoute
+  ApiPublicMovieRoute: typeof ApiPublicMovieRoute
+  ApiPublicSongRoute: typeof ApiPublicSongRoute
+  ApiPublicStreamRoute: typeof ApiPublicStreamRoute
+  ApiPublicSubtitleRoute: typeof ApiPublicSubtitleRoute
+  PProviderIdRoute: typeof PProviderIdRoute
+  PProviderIndexRoute: typeof PProviderIndexRoute
+  ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
+  LugandaNaraboxKindIdRoute: typeof LugandaNaraboxKindIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +647,389 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channels': {
+      id: '/channels'
+      path: '/channels'
+      fullPath: '/channels'
+      preLoaderRoute: typeof ChannelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developer': {
+      id: '/developer'
+      path: '/developer'
+      fullPath: '/developer'
+      preLoaderRoute: typeof DeveloperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doc': {
+      id: '/doc'
+      path: '/doc'
+      fullPath: '/doc'
+      preLoaderRoute: typeof DocRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doc.md': {
+      id: '/doc.md'
+      path: '/doc.md'
+      fullPath: '/doc.md'
+      preLoaderRoute: typeof DocDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music': {
+      id: '/music'
+      path: '/music'
+      fullPath: '/music'
+      preLoaderRoute: typeof MusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-animations.xml': {
+      id: '/sitemap-animations.xml'
+      path: '/sitemap-animations.xml'
+      fullPath: '/sitemap-animations.xml'
+      preLoaderRoute: typeof SitemapAnimationsDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-channels.xml': {
+      id: '/sitemap-channels.xml'
+      path: '/sitemap-channels.xml'
+      fullPath: '/sitemap-channels.xml'
+      preLoaderRoute: typeof SitemapChannelsDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-images.xml': {
+      id: '/sitemap-images.xml'
+      path: '/sitemap-images.xml'
+      fullPath: '/sitemap-images.xml'
+      preLoaderRoute: typeof SitemapImagesDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-luganda-movies.xml': {
+      id: '/sitemap-luganda-movies.xml'
+      path: '/sitemap-luganda-movies.xml'
+      fullPath: '/sitemap-luganda-movies.xml'
+      preLoaderRoute: typeof SitemapLugandaMoviesDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-luo-movies.xml': {
+      id: '/sitemap-luo-movies.xml'
+      path: '/sitemap-luo-movies.xml'
+      fullPath: '/sitemap-luo-movies.xml'
+      preLoaderRoute: typeof SitemapLuoMoviesDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-movies.xml': {
+      id: '/sitemap-movies.xml'
+      path: '/sitemap-movies.xml'
+      fullPath: '/sitemap-movies.xml'
+      preLoaderRoute: typeof SitemapMoviesDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-music.xml': {
+      id: '/sitemap-music.xml'
+      path: '/sitemap-music.xml'
+      fullPath: '/sitemap-music.xml'
+      preLoaderRoute: typeof SitemapMusicDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-pages.xml': {
+      id: '/sitemap-pages.xml'
+      path: '/sitemap-pages.xml'
+      fullPath: '/sitemap-pages.xml'
+      preLoaderRoute: typeof SitemapPagesDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-series.xml': {
+      id: '/sitemap-series.xml'
+      path: '/sitemap-series.xml'
+      fullPath: '/sitemap-series.xml'
+      preLoaderRoute: typeof SitemapSeriesDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-videos.xml': {
+      id: '/sitemap-videos.xml'
+      path: '/sitemap-videos.xml'
+      fullPath: '/sitemap-videos.xml'
+      preLoaderRoute: typeof SitemapVideosDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-vj.xml': {
+      id: '/sitemap-vj.xml'
+      path: '/sitemap-vj.xml'
+      fullPath: '/sitemap-vj.xml'
+      preLoaderRoute: typeof SitemapVjDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tutorial': {
+      id: '/tutorial'
+      path: '/tutorial'
+      fullPath: '/tutorial'
+      preLoaderRoute: typeof TutorialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/doc-chat': {
+      id: '/api/doc-chat'
+      path: '/api/doc-chat'
+      fullPath: '/api/doc-chat'
+      preLoaderRoute: typeof ApiDocChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artist/$id': {
+      id: '/artist/$id'
+      path: '/artist/$id'
+      fullPath: '/artist/$id'
+      preLoaderRoute: typeof ArtistIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/category/$slug': {
+      id: '/category/$slug'
+      path: '/category/$slug'
+      fullPath: '/category/$slug'
+      preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channel/$id': {
+      id: '/channel/$id'
+      path: '/channel/$id'
+      fullPath: '/channel/$id'
+      preLoaderRoute: typeof ChannelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doc/': {
+      id: '/doc/'
+      path: '/'
+      fullPath: '/doc/'
+      preLoaderRoute: typeof DocIndexRouteImport
+      parentRoute: typeof DocRoute
+    }
+    '/doc/$slug': {
+      id: '/doc/$slug'
+      path: '/$slug'
+      fullPath: '/doc/$slug'
+      preLoaderRoute: typeof DocSlugRouteImport
+      parentRoute: typeof DocRoute
+    }
+    '/luganda/': {
+      id: '/luganda/'
+      path: '/luganda'
+      fullPath: '/luganda/'
+      preLoaderRoute: typeof LugandaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/luganda/$id': {
+      id: '/luganda/$id'
+      path: '/luganda/$id'
+      fullPath: '/luganda/$id'
+      preLoaderRoute: typeof LugandaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/luo/': {
+      id: '/luo/'
+      path: '/luo'
+      fullPath: '/luo/'
+      preLoaderRoute: typeof LuoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/luo/$id': {
+      id: '/luo/$id'
+      path: '/luo/$id'
+      fullPath: '/luo/$id'
+      preLoaderRoute: typeof LuoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music-artist/$slug': {
+      id: '/music-artist/$slug'
+      path: '/music-artist/$slug'
+      fullPath: '/music-artist/$slug'
+      preLoaderRoute: typeof MusicArtistSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$id': {
+      id: '/pay/$id'
+      path: '/pay/$id'
+      fullPath: '/pay/$id'
+      preLoaderRoute: typeof PayIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teso/': {
+      id: '/teso/'
+      path: '/teso'
+      fullPath: '/teso/'
+      preLoaderRoute: typeof TesoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teso/$id': {
+      id: '/teso/$id'
+      path: '/teso/$id'
+      fullPath: '/teso/$id'
+      preLoaderRoute: typeof TesoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch/$id': {
+      id: '/watch/$id'
+      path: '/watch/$id'
+      fullPath: '/watch/$id'
+      preLoaderRoute: typeof WatchIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/admin-upload': {
+      id: '/api/public/admin-upload'
+      path: '/api/public/admin-upload'
+      fullPath: '/api/public/admin-upload'
+      preLoaderRoute: typeof ApiPublicAdminUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/movie': {
+      id: '/api/public/movie'
+      path: '/api/public/movie'
+      fullPath: '/api/public/movie'
+      preLoaderRoute: typeof ApiPublicMovieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/song': {
+      id: '/api/public/song'
+      path: '/api/public/song'
+      fullPath: '/api/public/song'
+      preLoaderRoute: typeof ApiPublicSongRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/stream': {
+      id: '/api/public/stream'
+      path: '/api/public/stream'
+      fullPath: '/api/public/stream'
+      preLoaderRoute: typeof ApiPublicStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/subtitle': {
+      id: '/api/public/subtitle'
+      path: '/api/public/subtitle'
+      fullPath: '/api/public/subtitle'
+      preLoaderRoute: typeof ApiPublicSubtitleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$provider/': {
+      id: '/p/$provider/'
+      path: '/p/$provider'
+      fullPath: '/p/$provider/'
+      preLoaderRoute: typeof PProviderIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$provider/$id': {
+      id: '/p/$provider/$id'
+      path: '/p/$provider/$id'
+      fullPath: '/p/$provider/$id'
+      preLoaderRoute: typeof PProviderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/$': {
+      id: '/api/public/v1/$'
+      path: '/api/public/v1/$'
+      fullPath: '/api/public/v1/$'
+      preLoaderRoute: typeof ApiPublicV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/luganda/narabox/$kind/$id': {
+      id: '/luganda/narabox/$kind/$id'
+      path: '/luganda/narabox/$kind/$id'
+      fullPath: '/luganda/narabox/$kind/$id'
+      preLoaderRoute: typeof LugandaNaraboxKindIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface DocRouteChildren {
+  DocSlugRoute: typeof DocSlugRoute
+  DocIndexRoute: typeof DocIndexRoute
+}
+
+const DocRouteChildren: DocRouteChildren = {
+  DocSlugRoute: DocSlugRoute,
+  DocIndexRoute: DocIndexRoute,
+}
+
+const DocRouteWithChildren = DocRoute._addFileChildren(DocRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ChannelsRoute: ChannelsRoute,
+  DeveloperRoute: DeveloperRoute,
+  DocRoute: DocRouteWithChildren,
+  DocDotmdRoute: DocDotmdRoute,
+  MusicRoute: MusicRoute,
+  PlansRoute: PlansRoute,
+  ProfileRoute: ProfileRoute,
+  SearchRoute: SearchRoute,
+  SitemapAnimationsDotxmlRoute: SitemapAnimationsDotxmlRoute,
+  SitemapChannelsDotxmlRoute: SitemapChannelsDotxmlRoute,
+  SitemapImagesDotxmlRoute: SitemapImagesDotxmlRoute,
+  SitemapLugandaMoviesDotxmlRoute: SitemapLugandaMoviesDotxmlRoute,
+  SitemapLuoMoviesDotxmlRoute: SitemapLuoMoviesDotxmlRoute,
+  SitemapMoviesDotxmlRoute: SitemapMoviesDotxmlRoute,
+  SitemapMusicDotxmlRoute: SitemapMusicDotxmlRoute,
+  SitemapPagesDotxmlRoute: SitemapPagesDotxmlRoute,
+  SitemapSeriesDotxmlRoute: SitemapSeriesDotxmlRoute,
+  SitemapVideosDotxmlRoute: SitemapVideosDotxmlRoute,
+  SitemapVjDotxmlRoute: SitemapVjDotxmlRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TutorialRoute: TutorialRoute,
+  ApiDocChatRoute: ApiDocChatRoute,
+  ArtistIdRoute: ArtistIdRoute,
+  CategorySlugRoute: CategorySlugRoute,
+  ChannelIdRoute: ChannelIdRoute,
+  LugandaIdRoute: LugandaIdRoute,
+  LuoIdRoute: LuoIdRoute,
+  MusicArtistSlugRoute: MusicArtistSlugRoute,
+  PayIdRoute: PayIdRoute,
+  TesoIdRoute: TesoIdRoute,
+  WatchIdRoute: WatchIdRoute,
+  LugandaIndexRoute: LugandaIndexRoute,
+  LuoIndexRoute: LuoIndexRoute,
+  TesoIndexRoute: TesoIndexRoute,
+  ApiPublicAdminUploadRoute: ApiPublicAdminUploadRoute,
+  ApiPublicMovieRoute: ApiPublicMovieRoute,
+  ApiPublicSongRoute: ApiPublicSongRoute,
+  ApiPublicStreamRoute: ApiPublicStreamRoute,
+  ApiPublicSubtitleRoute: ApiPublicSubtitleRoute,
+  PProviderIdRoute: PProviderIdRoute,
+  PProviderIndexRoute: PProviderIndexRoute,
+  ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
+  LugandaNaraboxKindIdRoute: LugandaNaraboxKindIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

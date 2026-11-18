@@ -3,15 +3,29 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
-  // One client per request: a module-level QueryClient leaks cached data between SSR requests.
-  const queryClient = new QueryClient();
+  // Keep fetched rows (and therefore their already-loaded posters) around so
+  // scrolling or refocusing the tab never blanks artwork that is on screen.
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+      },
+    },
+  });
+
 
   const router = createRouter({
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    // Lets Query own freshness; set caching defaults on the QueryClient, not the router.
-    defaultPreloadStaleTime: 0,
+    // Start loading a page the moment a link is hovered/touched so Luo and
+    // Luganda open instantly instead of waiting for the click.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 0,
+    defaultPreloadStaleTime: 30 * 1000,
   });
 
   return router;

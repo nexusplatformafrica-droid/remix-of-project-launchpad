@@ -1,3 +1,4 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -6,12 +7,26 @@ import {
   useRouter,
   HeadContent,
   Scripts,
-  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { Toaster } from "@/components/ui/sonner";
+import { SubscriptionProvider } from "@/hooks/useSubscription";
+import { AuthProvider } from "@/hooks/useAuth";
+import { DevToolsGuard } from "@/components/security/DevToolsGuard";
+import { WhatsAppPrompt } from "@/components/youku/WhatsAppPrompt";
+import { MovieMaxTvPrompt } from "@/components/youku/MovieMaxTvPrompt";
+import { ReferralTracker } from "@/components/youku/ReferralTracker";
+import { DownloadTour } from "@/components/luo/DownloadTour";
+import { LiveSync } from "@/components/LiveSync";
+import { RouteProgress } from "@/components/youku/RouteProgress";
+import { ActivityTracker } from "@/components/ActivityTracker";
+import { PaymentKeepAlive } from "@/components/PaymentKeepAlive";
+import { UploadFloat } from "@/components/admin/UploadFloat";
+
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerDownloadWorker } from "@/lib/download";
 
 function NotFoundComponent() {
   return (
@@ -39,6 +54,17 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    // A stale tab after an update can't fetch old page code — reload once.
+    const msg = String((error as Error)?.message ?? error);
+    if (/dynamically imported module|Importing a module script failed|Loading chunk/i.test(msg)) {
+      const k = "chunk-reload-at";
+      const last = Number(sessionStorage.getItem(k) ?? 0);
+      if (Date.now() - last > 15000) {
+        sessionStorage.setItem(k, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -75,29 +101,41 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    // Replace these placeholders with the app's name and description when first building the app.
-    // Each content route, / included, must still set its own head(). Never add og:image or
-    // twitter:image here: every page without its own would inherit the root's preview image.
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "theme-color", content: "#18191c" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "MOVIE MAX" },
+      { title: "MOVIE MAX — Stream Movies and Series" },
+      { name: "description", content: "Watch and Download Translated movies English, Hindi, Luganda, Luo, Teso, esla, ptbr, Tamil, Telugu and in their original language with subtitles." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "icon", href: "/favicon-192.png", type: "image/png", sizes: "192x192" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      // Warm the poster/artwork CDNs so images start downloading with the very
+      // first request instead of after a fresh TLS handshake per rail.
+      { rel: "preconnect", href: "https://valiw.hakunaymatata.com", crossOrigin: "anonymous" },
+      { rel: "dns-prefetch", href: "https://valiw.hakunaymatata.com" },
+      { rel: "preconnect", href: "https://api7.aoneroom.com", crossOrigin: "anonymous" },
+      { rel: "dns-prefetch", href: "https://api7.aoneroom.com" },
+      { rel: "preconnect", href: "https://pbcdn.aoneroom.com", crossOrigin: "anonymous" },
+      { rel: "dns-prefetch", href: "https://pbcdn.aoneroom.com" },
     ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -121,10 +159,31 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    void registerDownloadWorker().catch(() => {});
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <LiveSync />
+      <PaymentKeepAlive />
+      <RouteProgress />
+      <AuthProvider>
+        <UploadFloat />
+        <ActivityTracker />
+        <SubscriptionProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <ReferralTracker />
+        </SubscriptionProvider>
+      </AuthProvider>
+      <DevToolsGuard />
+      <WhatsAppPrompt />
+      <MovieMaxTvPrompt />
+      <DownloadTour />
+      <Toaster position="top-center" richColors />
     </QueryClientProvider>
+
+
   );
 }

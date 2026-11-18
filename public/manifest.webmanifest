@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "MOVIE MAX",
+  "short_name": "MOVIE MAX",
+  "description": "Movies, series, music and live TV on MOVIE MAX.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#18191c",
+  "background_color": "#18191c",
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
