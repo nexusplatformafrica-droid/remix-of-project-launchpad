@@ -8,6 +8,7 @@ import { money, seriesByDay, timeAgo } from "@/lib/admin";
 import { walletBalance } from "@/lib/relworx";
 import { revenueWindows, startOfDay, expiringWithin } from "@/lib/admin-insights";
 import { Empty, MiniStat, Panel, SoftArea, Stat } from "./ui";
+import { OnlineNow, RevenueGoal } from "./SpecialPanels";
 
 export type AdminTab = "overview" | "insights" | "members" | "reports" | "system" | "users" | "content" | "hero" | "mhero" | "artists" | "notify" | "wallet" | "settings" | "team" | "channels";
 
@@ -75,9 +76,6 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
   const revenue = (d?.tx ?? [])
     .filter((t) => t.status === "success")
     .reduce((s, t) => s + Number(t.amount), 0);
-  const paidOut = (d?.withdrawals ?? [])
-    .filter((w) => w.status !== "rejected")
-    .reduce((s, w) => s + Number(w.amount), 0);
 
   const revChart = seriesByDay(
     (d?.tx ?? []).filter((t) => t.status === "success"),
@@ -127,19 +125,9 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
           onClick={() => go("users")}
         />
         {!limited && <Stat
-          label="Wallet balance"
-          value={
-            wallet.isLoading
-              ? "…"
-              : wallet.data == null
-                ? money(revenue - paidOut)
-                : money(wallet.data)
-          }
-          sub={
-            wallet.data == null
-              ? `${money(revenue)} earned · ${money(paidOut)} out`
-              : `Live Relworx wallet · ${money(revenue)} earned`
-          }
+          label="Relworx balance"
+          value={wallet.isLoading ? "…" : wallet.data == null ? "Unavailable" : money(wallet.data)}
+          sub={wallet.data == null ? "Relworx did not answer · open Wallet" : "Live Relworx payout wallet"}
           tone="mint"
           icon={<Wallet className="size-4" />}
           onClick={() => go("wallet")}
@@ -152,6 +140,11 @@ export function Overview({ go, limited = false }: { go: (t: AdminTab) => void; l
           icon={<Film className="size-4" />}
           onClick={() => go("content")}
         />
+      </div>
+
+      <div className={`grid gap-3 ${limited ? "" : "lg:grid-cols-2"}`}>
+        {!limited && <RevenueGoal tx={d?.tx ?? []} />}
+        <OnlineNow profiles={d?.profiles ?? []} />
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1.4fr_1fr]">

@@ -224,3 +224,149 @@ export async function paypalPayout(input: { amount: number; currency: string; re
   const id = r.json?.batch_header?.payout_batch_id ? String(r.json.batch_header.payout_batch_id) : null;
   return { ok: true, status: "processing", reference: id, message: "PayPal accepted the payout." };
 }
+
+/* ------------------------ Live transactions + refunds ------------------------ */
+
+export type LiveTx = {
+  provider: "pawapay" | "whop" | "paypal";
+  id: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "failed" | "refunded";
+  rawStatus: string;
+  created_at: string;
+  who: string;
+  detail: string;
+  refundable: boolean;
+};
+export type LiveList = { ok: boolean; tx: LiveTx[]; message?: string | undefined; needsApproval?: boolean | undefined };
+
+const money = (v: any): number => (v && typeof v === "object" ? Number(v.amount ?? v.value) : Number(v)) || 0;
+
+/** Real pawaPay deposits, looked up one by one by their deposit IDs. */
+export async function pawaPayDeposits(ids: string[]): Promise<LiveList> {
+  const rows = await Promise.all(
+    ids.slice(0, 60).map(async (id) => {
+      try {
+        const r = await pawa("GET", `/v2/deposits/${encodeURIComponent(id)}`);
+        if (!r.ok || r.json?.status !== "FOUND" || !r.json?.data) return null;
+        const d = r.json.data;
+        const st = String(d.status ?? "");
+        const status: LiveTx["status"] = st === "COMPLETED" ? "paid" : st === "FAILED" ? "failed" : "pending";
+        return {
+          provider: "pawapay" as const,
+          id: String(d.depositId ?? id),
+          amount: Number(d.amount) || 0,
+          currency: String(d.currency ?? ""),
+          status,
+          rawStatus: st,
+          created_at: String(d.created ?? new Date().toISOString()),
+          who: String(d.payer?.accountDetails?.phoneNumber ?? "—"),
+          detail: [d.payer?.accountDetails?.provider, d.failureReason?.failureMessage].filter(Boolean).join(" · "),
+          refundable: status === "paid",
+        };
+      } catch {
+        return null;
+      }
+    }),
+  );
+  const tx = rows.filter((r): r is NonNullable<typeof r> => r !== null);
+  return { ok: ids.length === 0 || tx.length > 0, tx, message: ids.length && !tx.length ? "pawaPay did not return these payments." : undefined };
+}
+
+/** Real card payments from Whop. */
+export async function whopPaymentsLive(): Promise<LiveList> {
+  const company = paymentKey("WHOP_COMPANY_ID");
+  if (!company) return { ok: false, tx: [], message: "Whop business ID is missing." };
+  const r = await whop(`/payments?account_id=${encodeURIComponent(company)}&first=100&order=created_at&direction=desc`);
+  if (!r.ok) return { ok: false, tx: [], needsApproval: r.status === 401 || r.status === 403, message: errText(r, "Whop payments unavailable") };
+  const tx = ((r.json?.data ?? []) as any[]).map((p) => {
+    const st = String(p.status ?? "").toLowerCase();
+    const sub = String(p.substatus ?? "").toLowerCase();
+    const status: LiveTx["status"] = p.refunded_at || sub === "refunded"
+      ? "refunded"
+      : st === "paid" && (!sub || sub === "succeeded")
+        ? "paid"
+        : ["void", "uncollectible", "failed", "canceled", "cancelled"].includes(st) || ["failed", "canceled", "cancelled"].includes(sub)
+          ? "failed"
+          : "pending";
+    const total = p.total ?? p.amount_charged ?? p.usd_total;
+    return {
+      provider: "whop" as const,
+      id: String(p.id),
+      amount: money(total),
+      currency: String((total && typeof total === "object" ? total.currency : p.currency) ?? "usd").toUpperCase(),
+      status,
+      rawStatus: sub || st,
+      created_at: String(p.created_at ?? ""),
+      who: String(p.customer_email ?? p.user?.email ?? p.user?.name ?? p.user?.username ?? "—"),
+      detail: [p.payment_instrument?.brand, p.payment_instrument?.last4 ? `••${p.payment_instrument.last4}` : "", p.failure_message].filter(Boolean).join(" · "),
+      refundable: Boolean(p.refundable),
+    };
+  });
+  return { ok: true, tx };
+}
+
+/** Real PayPal transactions for the last 30 days (needs PayPal's transaction search access). */
+export async function paypalTransactionsLive(): Promise<LiveList> {
+  const end = new Date();
+  const start = new Date(end.getTime() - 30 * 86_400_000);
+  const r = await paypal(
+    `/v1/reporting/transactions?start_date=${start.toISOString().slice(0, 19)}Z&end_date=${end.toISOString().slice(0, 19)}Z&fields=transaction_info,payer_info&page_size=100`,
+  );
+  if (r.status === 401 || r.status === 403)
+    return { ok: false, tx: [], needsApproval: true, message: "Waiting for PayPal to turn on transaction access for this account." };
+  if (!r.ok) return { ok: false, tx: [], message: errText(r, "PayPal transactions unavailable") };
+  const tx = ((r.json?.transaction_details ?? []) as any[])
+    .map((t) => {
+      const i = t.transaction_info ?? {};
+      const amount = Number(i.transaction_amount?.value) || 0;
+      const code = String(i.transaction_status ?? "");
+      const status: LiveTx["status"] = code === "S" ? (amount < 0 ? "refunded" : "paid") : code === "P" ? "pending" : code === "V" ? "refunded" : "failed";
+      return {
+        provider: "paypal" as const,
+        id: String(i.transaction_id ?? ""),
+        amount: Math.abs(amount),
+        currency: String(i.transaction_amount?.currency_code ?? "USD"),
+        status,
+        rawStatus: `${code} ${i.transaction_event_code ?? ""}`.trim(),
+        created_at: String(i.transaction_initiation_date ?? ""),
+        who: String(t.payer_info?.email_address ?? t.payer_info?.payer_name?.alternate_full_name ?? "—"),
+        detail: String(i.transaction_subject ?? i.transaction_note ?? ""),
+        refundable: code === "S" && amount > 0,
+      };
+    })
+    .reverse();
+  return { ok: true, tx };
+}
+
+export async function refundPayment(input: { provider: LiveTx["provider"]; id: string; amount?: number | undefined; currency?: string | undefined }): Promise<PayoutResult> {
+  if (input.provider === "whop") {
+    const r = await whop(`/payments/${encodeURIComponent(input.id)}/refund`, {
+      method: "POST",
+      idem: crypto.randomUUID(),
+      body: JSON.stringify(input.amount ? { partial_amount: input.amount } : {}),
+    });
+    if (!r.ok) return { ok: false, status: "failed", reference: input.id, message: errText(r, "Whop refused the refund") };
+    return { ok: true, status: "refunded", reference: input.id, message: "Whop refunded the payment. The buyer gets an email." };
+  }
+  if (input.provider === "paypal") {
+    const r = await paypal(`/v2/payments/captures/${encodeURIComponent(input.id)}/refund`, {
+      method: "POST",
+      body: JSON.stringify(input.amount && input.currency ? { amount: { value: input.amount.toFixed(2), currency_code: input.currency } } : {}),
+    });
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, status: "failed", reference: input.id, message: "PayPal hasn't allowed refunds from this app yet." };
+    if (!r.ok) return { ok: false, status: "failed", reference: input.id, message: errText(r, "PayPal refused the refund") };
+    return { ok: true, status: "refunded", reference: String(r.json?.id ?? input.id), message: "PayPal refunded the payment." };
+  }
+  const refundId = crypto.randomUUID();
+  const r = await pawa("POST", "/v2/refunds", {
+    refundId,
+    depositId: input.id,
+    ...(input.amount && input.currency ? { amount: String(input.amount), currency: input.currency } : {}),
+  });
+  const st = String(r.json?.status ?? "").toUpperCase();
+  if (!r.ok || st === "REJECTED") return { ok: false, status: "failed", reference: refundId, message: errText(r, "pawaPay refused the refund") };
+  return { ok: true, status: "processing", reference: refundId, message: "pawaPay accepted the refund. The money returns to the customer's phone." };
+}

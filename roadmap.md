@@ -95,4 +95,7 @@
 - [x] PayPal colours (gold/blue) for wallet balance, transactions and the Pay with card button.
 - [x] Compact admin dashboard with new tools: Insights, Members (expiring/win-back), Reports (CSV), System health, quick search (Ctrl+K), today strip.
 - [x] Balances for every payment service: mobile money (withdraw), Whop real balance + withdraw, PayPal balance + withdraw once PayPal approves payouts.
-- [ ] Verify live pawaPay/Whop/PayPal balances and a real payout signed in as admin (blocked: no signed-in Firebase admin session; PayPal needs Payouts/balance access approved).
+- [ ] Verify live pawaPay/Whop/PayPal balances, live transactions, refunds and a real payout signed in as admin (blocked: no signed-in Firebase admin session; PayPal needs Payouts/balance access approved).
+- [x] Wallet shows only real provider data: real balances (no ledger estimates) and live transactions straight from Whop, PayPal and pawaPay (Relworx has no transaction list; its live balance is shown).
+- [x] Confirm the Pay with card button change is only in the subscription popup / pay page (admin dashboard has none).
+- [x] More special dashboard features: refunds from the dashboard, monthly revenue goal, who's online now, payment problem list.

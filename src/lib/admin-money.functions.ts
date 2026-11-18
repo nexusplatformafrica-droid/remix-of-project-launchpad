@@ -62,3 +62,55 @@ export const adminProviderPayout = createServerFn({ method: "POST" })
       return { ok: false, status: "failed", reference: null, message: e instanceof Error ? e.message : "Payout failed" };
     }
   });
+
+/** Live transactions straight from pawaPay, Whop and PayPal. Admin only. */
+export const adminProviderTransactions = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ idToken, depositIds: z.array(z.string().uuid()).max(60) }).parse(d))
+  .handler(async ({ data }) => {
+    try {
+      await guard(data.idToken);
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Not allowed" };
+    }
+    const m = await import("./admin-money.server");
+    const safe = async (fn: () => Promise<import("./admin-money.server").LiveList>) => {
+      try {
+        return await fn();
+      } catch (e) {
+        return { ok: false, tx: [], message: e instanceof Error ? e.message : "Unavailable" };
+      }
+    };
+    const [pawapay, whop, paypal] = await Promise.all([
+      safe(() => m.pawaPayDeposits(data.depositIds)),
+      safe(m.whopPaymentsLive),
+      safe(m.paypalTransactionsLive),
+    ]);
+    return { ok: true as const, pawapay, whop, paypal };
+  });
+
+/** Refunds a real payment at its provider. Admin only. */
+export const adminRefund = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        idToken,
+        provider: z.enum(["pawapay", "whop", "paypal"]),
+        id: z.string().trim().min(3).max(120),
+        amount: amount.optional(),
+        currency: currency.optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    try {
+      await guard(data.idToken);
+    } catch (e) {
+      return { ok: false, status: "failed", reference: null, message: e instanceof Error ? e.message : "Not allowed" };
+    }
+    const m = await import("./admin-money.server");
+    try {
+      return await m.refundPayment({ provider: data.provider, id: data.id, amount: data.amount, currency: data.currency });
+    } catch (e) {
+      return { ok: false, status: "failed", reference: null, message: e instanceof Error ? e.message : "Refund failed" };
+    }
+  });

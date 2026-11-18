@@ -43,3 +43,30 @@ describe("admin insights", () => {
     expect(toCsv([{ name: 'Paul, "VJ"', n: 2 }])).toBe('name,n\n"Paul, ""VJ""",2');
   });
 });
+
+import { goalProgress, paymentProblems } from "@/lib/admin-insights";
+
+describe("payment problems and goals", () => {
+  it("flags people with 2+ attempts and no success in 7 days", () => {
+    const tx = [
+      { user_id: "a", amount: 1000, status: "failed", created_at: iso(now - DAY_MS) },
+      { user_id: "a", amount: 1000, status: "pending", created_at: iso(now - 2 * DAY_MS) },
+      { user_id: "b", amount: 1000, status: "failed", created_at: iso(now - DAY_MS) },
+      { user_id: "b", amount: 1000, status: "success", created_at: iso(now - 2 * DAY_MS) },
+      { user_id: "c", amount: 1000, status: "failed", created_at: iso(now - DAY_MS) },
+    ];
+    expect(paymentProblems(tx, 7, 2, now).map((p) => [p.user_id, p.attempts])).toEqual([["a", 2]]);
+  });
+
+  it("measures this month's revenue against the goal", () => {
+    const tx = [
+      { amount: 50000, status: "success", created_at: iso(new Date("2026-11-02T10:00:00").getTime()) },
+      { amount: 99000, status: "success", created_at: iso(new Date("2026-10-30T10:00:00").getTime()) },
+    ];
+    const g = goalProgress(tx, 200000, now);
+    expect(g.earned).toBe(50000);
+    expect(g.percent).toBe(25);
+    expect(g.daysLeft).toBe(13);
+    expect(g.perDayNeeded).toBe(11539);
+  });
+});

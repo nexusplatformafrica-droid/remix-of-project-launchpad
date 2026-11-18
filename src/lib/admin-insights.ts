@@ -140,3 +140,32 @@ export function inDateRange<T extends { created_at?: string | null }>(rows: T[],
     return t >= a && t <= b;
   });
 }
+
+/** People who tried to pay 2+ times recently without a single success — they likely need help. */
+export function paymentProblems<T extends TxLike>(tx: T[], days = 7, min = 2, now = Date.now()) {
+  const since = now - days * DAY_MS;
+  const byUser = new Map<string, T[]>();
+  for (const t of tx) {
+    if (!t.user_id || new Date(t.created_at).getTime() < since) continue;
+    byUser.set(t.user_id, [...(byUser.get(t.user_id) ?? []), t]);
+  }
+  return [...byUser.entries()]
+    .filter(([, list]) => list.length >= min && !list.some(paid))
+    .map(([user_id, list]) => ({ user_id, attempts: list.length, last: list.map((t) => t.created_at).sort().at(-1)! }))
+    .sort((a, b) => (a.last < b.last ? 1 : -1));
+}
+
+/** Progress toward a monthly revenue goal: earned this month, % done, and the daily pace still needed. */
+export function goalProgress(tx: TxLike[], goal: number, now = Date.now()) {
+  const d = new Date(now);
+  const monthStart = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+  const earned = tx.filter((t) => paid(t) && new Date(t.created_at).getTime() >= monthStart).reduce((s, t) => s + amt(t), 0);
+  const daysLeft = Math.max(1, Math.ceil((monthEnd - now) / DAY_MS));
+  return {
+    earned,
+    percent: goal > 0 ? Math.min(100, Math.round((earned / goal) * 100)) : 0,
+    daysLeft,
+    perDayNeeded: Math.max(0, Math.ceil((goal - earned) / daysLeft)),
+  };
+}

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, CheckCircle2, XCircle, RefreshCw, Trash2, Globe, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { paymentBackend } from "@/lib/relworx";
-import { fdb } from "@/lib/fdb";
+import { fdb, purgeTable } from "@/lib/fdb";
 import { adminProviderBalances } from "@/lib/admin-money.functions";
 import { getFbAuth } from "@/lib/firebase";
 import { MiniStat, Panel, ghostBtn } from "./ui";
@@ -120,6 +120,22 @@ export function SystemTab() {
           </button>
           <button type="button" className={`${ghostBtn} h-9 text-[12.5px]`} onClick={() => window.location.reload()}>
             <RefreshCw className="mr-1 inline size-3.5" /> Reload dashboard
+          </button>
+          <button
+            type="button"
+            className={`${ghostBtn} h-9 text-[12.5px]`}
+            onClick={async () => {
+              if (!confirm("Delete every stored payment attempt from the site's database? The payment services keep their real records.")) return;
+              try {
+                const n = await purgeTable("luo_transactions");
+                toast.success(`Cleared ${n} stored payment record${n === 1 ? "" : "s"}`);
+                void qc.invalidateQueries();
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Could not clear");
+              }
+            }}
+          >
+            <Trash2 className="mr-1 inline size-3.5" /> Clear stored payment records
           </button>
           <a href="/sitemap.xml" target="_blank" rel="noreferrer" className={`${ghostBtn} inline-flex h-9 items-center text-[12.5px]`}>
             <Globe className="mr-1 size-3.5" /> Open sitemap

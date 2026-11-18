@@ -6,6 +6,7 @@ import { fullDate, money, timeAgo } from "@/lib/admin";
 import { breakdown, downloadCsv, expiringWithin, recentlyExpired, toCsv, type SubLike } from "@/lib/admin-insights";
 import { loadOverview } from "./Overview";
 import { BarList, Empty, Panel, Pill, Stat, chipBtn } from "./ui";
+import { PaymentProblems } from "./SpecialPanels";
 
 type Profile = { id: string; display_name?: string | null; email?: string | null; phone?: string | null; msisdn?: string | null };
 
@@ -127,6 +128,8 @@ export function MembersTab() {
           <List list={lapsed} kind="lapsed" />
         </Panel>
       </div>
+
+      <PaymentProblems tx={q.data?.tx ?? []} profiles={(q.data?.profiles ?? []) as Profile[]} />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <Panel title="Active plans">

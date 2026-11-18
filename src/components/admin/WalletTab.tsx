@@ -1,16 +1,14 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowDownToLine, Wallet, TrendingUp, Receipt, Download, Search, Smartphone, CreditCard, RefreshCw, Clock } from "lucide-react";
+import { ArrowDownToLine, Wallet, TrendingUp, Receipt, Download, Search, Smartphone, CreditCard, RefreshCw, Clock, Undo2 } from "lucide-react";
 import { db as supabase } from "@/lib/db";
 import { fullDate, money, seriesByDay } from "@/lib/admin";
-import { allWalletBalances, sendWithdrawal, walletBalance } from "@/lib/relworx";
-import { adminWhopPayments } from "@/lib/admin-payments.functions";
-import { adminProviderBalances, adminProviderPayout } from "@/lib/admin-money.functions";
+import { allWalletBalances, sendWithdrawal } from "@/lib/relworx";
+import { adminProviderBalances, adminProviderPayout, adminProviderTransactions, adminRefund } from "@/lib/admin-money.functions";
 import { COUNTRIES, countryByCurrency, formatAmount, normalizeFor } from "@/lib/countries";
-import { downloadCsv, methodLabel, toCsv } from "@/lib/admin-insights";
+import { downloadCsv, toCsv } from "@/lib/admin-insights";
 import { getFbAuth } from "@/lib/firebase";
-import { purgeTable } from "@/lib/fdb";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Empty, Panel, Pill, SoftArea, Stat, chipBtn, paypalBtn, softField } from "./ui";
 
@@ -28,13 +26,6 @@ type Tx = {
   created_at: string;
 };
 
-/** A real payment (pawaPay / Whop / PayPal) joined with the user and plan. */
-type MergedTx = Tx & {
-  userName: string;
-  userEmail: string;
-  planName: string;
-  liveStatus?: string | undefined;
-};
 
 type Provider = "pawapay" | "whop" | "paypal";
 type ProviderBalance = { currency: string; available: number; pending?: number | undefined; label?: string | undefined };
@@ -47,36 +38,50 @@ async function idToken() {
 }
 
 async function loadWallet() {
-  const [tx, wd, profiles] = await Promise.all([
+  const [tx, wd] = await Promise.all([
     supabase.from("luo_transactions").select("*").order("created_at", { ascending: false }),
     supabase.from("luo_withdrawals").select("*").order("created_at", { ascending: false }),
-    supabase.from("profiles").select("id, display_name, email, phone"),
   ]);
-  return {
-    tx: (tx.data ?? []) as Tx[],
-    wd: wd.data ?? [],
-    profiles: profiles.data ?? [],
-  };
+  return { tx: (tx.data ?? []) as Tx[], wd: wd.data ?? [] };
 }
 
 const PROVIDER_NAME: Record<Provider, string> = { pawapay: "Mobile money · pawaPay", whop: "Card · Whop", paypal: "PayPal" };
 
+type LiveTx = {
+  provider: Provider;
+  id: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "failed" | "refunded";
+  rawStatus: string;
+  created_at: string;
+  who: string;
+  detail: string;
+  refundable: boolean;
+};
+type LiveList = { ok: boolean; tx: LiveTx[]; message?: string | undefined; needsApproval?: boolean | undefined };
+
+/** Sums amounts per currency, biggest first, e.g. "UGX 16,000 · USD 12.00". */
+function perCurrency(list: LiveTx[]) {
+  const m = new Map<string, number>();
+  for (const t of list) m.set(t.currency, (m.get(t.currency) ?? 0) + t.amount);
+  const parts = [...m.entries()].sort((a, b) => b[1] - a[1]);
+  return parts.length ? parts.map(([c, v]) => formatAmount(v, c)).join(" · ") : "—";
+}
+
 export function WalletTab() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["admin-wallet"], queryFn: loadWallet });
-  const [openTx, setOpenTx] = useState<MergedTx | null>(null);
+  const [openTx, setOpenTx] = useState<LiveTx | null>(null);
   const [wdOpen, setWdOpen] = useState(false);
   const [payout, setPayout] = useState<Provider | null>(null);
   const [form, setForm] = useState({ phone: "", amount: "", reason: "", currency: "UGX" });
   const [search, setSearch] = useState("");
-  const [statusF, setStatusF] = useState<"all" | "success" | "pending" | "failed">("all");
-  const [methodF, setMethodF] = useState<string>("all");
+  const [statusF, setStatusF] = useState<"all" | LiveTx["status"]>("all");
+  const [providerF, setProviderF] = useState<"all" | Provider>("all");
 
-  const paidOut = (q.data?.wd ?? []).filter((w) => w.status !== "rejected").reduce((s, w) => s + Number(w.amount), 0);
-  // The withdrawable amount is whatever Relworx actually holds; the ledger
-  // difference is only a fallback when the payment service is unreachable.
-  const live = useQuery({ queryKey: ["relworx-balance"], queryFn: () => walletBalance(), refetchInterval: 30_000, staleTime: 15_000 });
-  /** Real live balance for every supported country. */
+  const paidOut = (q.data?.wd ?? []).filter((w) => !["rejected", "failed"].includes(String(w.status))).reduce((s, w) => s + Number(w.amount), 0);
+  /** Real live Relworx balance for every supported country (payout wallet). */
   const balances = useQuery({ queryKey: ["relworx-balances"], queryFn: allWalletBalances, refetchInterval: 30_000, staleTime: 15_000 });
   /** Live pawaPay, Whop and PayPal balances (admin-only server check). */
   const services = useQuery({
@@ -85,63 +90,54 @@ export function WalletTab() {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
+  // pawaPay has no "list payments" call, so its real records are fetched one
+  // by one using the deposit IDs the site started.
+  const depositIds = useMemo(
+    () =>
+      (q.data?.tx ?? [])
+        .map((t) => String((t as { internal_reference?: string | null }).internal_reference ?? ""))
+        .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+        .slice(0, 60),
+    [q.data],
+  );
+  /** Live transactions straight from pawaPay, Whop and PayPal. */
+  const liveQ = useQuery({
+    queryKey: ["provider-transactions", depositIds.join(",")],
+    enabled: !q.isLoading,
+    queryFn: async () => adminProviderTransactions({ data: { idToken: await idToken(), depositIds } }),
+    retry: 1,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const lists = liveQ.data?.ok ? liveQ.data : null;
+  const live: LiveTx[] = lists
+    ? ([...lists.pawapay.tx, ...lists.whop.tx, ...lists.paypal.tx] as LiveTx[]).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    : [];
 
   const payoutCountry = countryByCurrency(form.currency);
   const payoutBalance = balances.data?.find((b) => b.currency === form.currency)?.balance ?? null;
-  const profileOf = (uid: string | null) => (q.data?.profiles ?? []).find((p) => p.id === uid);
+  const relworxUgx = balances.data?.find((b) => b.currency === "UGX")?.balance ?? null;
 
-  // Live card payments straight from Whop, matched to local transactions.
-  const whop = useQuery({ queryKey: ["whop-payments"], queryFn: () => adminWhopPayments(), refetchInterval: 20_000, staleTime: 10_000 });
+  const since30 = Date.now() - 30 * 86_400_000;
+  const paid30 = live.filter((t) => t.status === "paid" && new Date(t.created_at).getTime() >= since30);
+  const pending = live.filter((t) => t.status === "pending");
+  const refunded = live.filter((t) => t.status === "refunded" || t.status === "failed");
+  const mainCurrency = [...new Set(paid30.map((t) => t.currency))].sort(
+    (a, b) => paid30.filter((t) => t.currency === b).length - paid30.filter((t) => t.currency === a).length,
+  )[0] ?? "UGX";
+  const chart = seriesByDay(paid30.filter((t) => t.currency === mainCurrency), 30, (t) => t.amount);
 
-  const rows: MergedTx[] = (q.data?.tx ?? []).map((t) => {
-    const p = profileOf(t.user_id);
-    const liveCard = whop.data?.payments.find((w) => w.txId === String(t.id));
-    const liveStatus = liveCard
-      ? liveCard.refunded
-        ? "refunded"
-        : liveCard.status === "paid" && (!liveCard.substatus || liveCard.substatus === "succeeded")
-          ? "success"
-          : ["void", "uncollectible", "failed", "canceled", "cancelled"].includes(liveCard.status)
-            ? "failed"
-            : "pending"
-      : undefined;
-    return {
-      ...t,
-      status: liveStatus ?? t.status,
-      liveStatus,
-      userName: p?.display_name ?? p?.name ?? p?.email ?? t.phone ?? "Unknown user",
-      userEmail: p?.email ?? "—",
-      planName: (t as { plan_name?: string }).plan_name ?? t.method ?? t.kind,
-    };
-  });
-
-  const successRows = rows.filter((t) => t.status === "success");
-  const pendingRows = rows.filter((t) => t.status === "pending");
-  const earned = successRows.reduce((s, t) => s + Number(t.amount), 0);
-  const balance = live.data ?? earned - paidOut;
-  const chart = seriesByDay<{ created_at: string; amount: number }>(successRows, 21, (t) => Number(t.amount));
-
-  const methods = useMemo(() => [...new Set(rows.map((r) => methodLabel(r.method ?? r.kind)))], [rows]);
-  const shown = rows.filter((t) => {
-    if (statusF === "failed" ? !["failed", "expired", "refunded"].includes(t.status) : statusF !== "all" && t.status !== statusF) return false;
-    if (methodF !== "all" && methodLabel(t.method ?? t.kind) !== methodF) return false;
+  const shown = live.filter((t) => {
+    if (statusF !== "all" && t.status !== statusF) return false;
+    if (providerF !== "all" && t.provider !== providerF) return false;
     const s = search.trim().toLowerCase();
-    return !s || [t.userName, t.userEmail, t.phone, t.reference, t.planName].some((v) => (v ?? "").toLowerCase().includes(s));
+    return !s || [t.who, t.id, t.detail].some((v) => v.toLowerCase().includes(s));
   });
 
   const refreshMoney = () => {
-    for (const k of ["admin-wallet", "admin-overview", "relworx-balance", "relworx-balances", "whop-payments", "provider-balances"])
+    for (const k of ["admin-wallet", "admin-overview", "relworx-balance", "relworx-balances", "provider-balances", "provider-transactions"])
       void qc.invalidateQueries({ queryKey: [k] });
   };
-
-  const purge = useMutation({
-    mutationFn: () => purgeTable("luo_transactions"),
-    onSuccess: (n) => {
-      toast.success(`Cleared ${n} stored transaction${n === 1 ? "" : "s"}`);
-      refreshMoney();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const withdraw = useMutation({
     // Real payout: money leaves the Relworx wallet first, then the ledger row
@@ -150,8 +146,7 @@ export function WalletTab() {
       const amount = Number(form.amount);
       if (!form.phone.trim()) throw new Error("Phone number is required");
       if (!amount || amount <= 0) throw new Error("Enter a valid amount");
-      const cap = payoutBalance ?? (form.currency === "UGX" ? balance : null);
-      if (cap != null && amount > cap) throw new Error(`Amount is more than the available ${form.currency} balance`);
+      if (payoutBalance != null && amount > payoutBalance) throw new Error(`Amount is more than the available ${form.currency} balance`);
       const result = await sendWithdrawal({ phone: form.phone, amount, currency: form.currency, description: form.reason.trim() || "MOVIE MAX payout" });
       const { data: me } = await supabase.auth.getUser();
       const { error } = await supabase.from("luo_withdrawals").insert({
@@ -179,49 +174,63 @@ export function WalletTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const refund = useMutation({
+    mutationFn: async (t: LiveTx) => {
+      const res = await adminRefund({ data: { idToken: await idToken(), provider: t.provider, id: t.id } });
+      if (!res.ok) throw new Error(res.message);
+      return res;
+    },
+    onSuccess: (res) => {
+      toast.success(res.message);
+      setOpenTx(null);
+      refreshMoney();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const svc = services.data?.ok ? services.data : null;
   const svcError = services.data && !services.data.ok ? services.data.error : services.error instanceof Error ? services.error.message : null;
+  const liveError = liveQ.data && !liveQ.data.ok ? liveQ.data.error : liveQ.error instanceof Error ? liveQ.error.message : null;
+  const providerNotes = lists
+    ? (["pawapay", "whop", "paypal"] as Provider[])
+        .map((p) => ({ p, l: lists[p] as LiveList }))
+        .filter((x) => !x.l.ok && x.l.message)
+    : [];
 
   const exportCsv = () =>
     downloadCsv(
-      `moviemax-payments-${new Date().toISOString().slice(0, 10)}`,
-      toCsv(
-        shown.map((t) => ({
-          date: t.created_at,
-          user: t.userName,
-          email: t.userEmail,
-          phone: t.phone,
-          plan: t.planName,
-          method: methodLabel(t.method ?? t.kind),
-          amount: t.amount,
-          currency: t.currency,
-          status: t.status,
-          reference: t.reference,
-        })),
-      ),
+      `moviemax-live-payments-${new Date().toISOString().slice(0, 10)}`,
+      toCsv(shown.map((t) => ({ date: t.created_at, provider: PROVIDER_NAME[t.provider], customer: t.who, amount: t.amount, currency: t.currency, status: t.status, provider_status: t.rawStatus, id: t.id, detail: t.detail }))),
     );
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
         <Stat
-          label="Mobile money balance"
-          value={live.isLoading && live.data == null ? "…" : money(balance)}
+          label="Received · 30 days"
+          value={liveQ.isLoading ? "…" : paid30.length.toLocaleString()}
           tone="paypal"
-          sub={live.data == null ? "Ledger estimate · service offline" : "Live Relworx wallet"}
+          sub={liveQ.isLoading ? "Asking providers…" : perCurrency(paid30)}
+          icon={<TrendingUp className="size-4" />}
+          onClick={() => setStatusF("paid")}
+        />
+        <Stat
+          label="Relworx payout wallet"
+          value={balances.isLoading ? "…" : relworxUgx == null ? "Unavailable" : formatAmount(relworxUgx, "UGX")}
+          tone="paypalSky"
+          sub={relworxUgx == null ? "Relworx did not answer" : "Live from Relworx"}
           icon={<Wallet className="size-4" />}
           onClick={() => setWdOpen(true)}
         />
-        <Stat label="Total earned" value={money(earned)} tone="paypalSky" sub={`${successRows.length} paid · ${rows.length} total`} icon={<TrendingUp className="size-4" />} />
-        <Stat label="Withdrawn" value={money(paidOut)} tone="paypalMist" sub={`${q.data?.wd.length ?? 0} payouts`} icon={<ArrowDownToLine className="size-4" />} />
-        <Stat label="Pending payments" value={pendingRows.length.toLocaleString()} tone="paypalGold" sub={money(pendingRows.reduce((s, t) => s + Number(t.amount), 0))} icon={<Clock className="size-4" />} onClick={() => setStatusF("pending")} />
+        <Stat label="Pending now" value={liveQ.isLoading ? "…" : pending.length.toLocaleString()} tone="paypalGold" sub={perCurrency(pending)} icon={<Clock className="size-4" />} onClick={() => setStatusF("pending")} />
+        <Stat label="Paid out" value={money(paidOut)} tone="paypalMist" sub={`${q.data?.wd.length ?? 0} payouts sent from here`} icon={<ArrowDownToLine className="size-4" />} />
       </div>
 
       <Panel
-        title="Balances · every payment service"
+        title="Balances · live from each payment service"
         action={
           <button type="button" onClick={refreshMoney} className="flex items-center gap-1 rounded-full bg-paypal-mist px-2.5 py-1 text-[11px] font-bold text-paypal-navy ring-1 ring-black/5">
-            <RefreshCw className={`size-3 ${services.isFetching || balances.isFetching ? "animate-spin" : ""}`} /> Refresh
+            <RefreshCw className={`size-3 ${services.isFetching || balances.isFetching || liveQ.isFetching ? "animate-spin" : ""}`} /> Refresh
           </button>
         }
       >
@@ -233,7 +242,7 @@ export function WalletTab() {
             state={{
               ok: (balances.data ?? []).some((b) => b.balance != null),
               balances: (balances.data ?? []).filter((b) => b.balance != null).map((b) => ({ currency: b.currency, available: b.balance ?? 0, label: `${b.flag} ${b.country}` })),
-              message: balances.isLoading ? "Loading…" : undefined,
+              message: !balances.isLoading && !(balances.data ?? []).some((b) => b.balance != null) ? "Relworx did not return a balance." : undefined,
             }}
             loading={balances.isLoading}
             onPick={(cur) => {
@@ -255,75 +264,70 @@ export function WalletTab() {
         </div>
       </Panel>
 
-      <Panel title="Income · last 21 days" action={<span className="text-[11px] opacity-60">{money(earned)} lifetime</span>}>
-        <SoftArea data={chart} prefix="UGX " color="oklch(0.56 0.19 255)" height={170} />
+      <Panel title={`Money received · last 30 days (${mainCurrency})`} action={<span className="text-[11px] opacity-60">live from providers</span>}>
+        <SoftArea data={chart} prefix={`${mainCurrency} `} color="oklch(0.56 0.19 255)" height={160} />
       </Panel>
 
       <div className="grid gap-3 xl:grid-cols-[1.5fr_1fr]">
         <Panel
-          title="Transactions"
+          title="Live transactions"
           action={
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] opacity-60">
-                {q.isLoading ? "loading…" : `${shown.length}/${rows.length}${whop.data?.ok ? " · cards live from Whop" : ""}`}
-              </span>
+              <span className="text-[11px] opacity-60">{liveQ.isLoading ? "asking providers…" : `${shown.length}/${live.length} from pawaPay, Whop & PayPal`}</span>
               <button type="button" onClick={exportCsv} className="flex items-center gap-1 rounded-full bg-paypal-mist px-2.5 py-1 text-[11px] font-bold text-paypal-navy ring-1 ring-black/5">
                 <Download className="size-3" /> CSV
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm("Delete every stored transaction from the database? The payment providers keep the real record.")) purge.mutate();
-                }}
-                disabled={purge.isPending}
-                className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold ring-1 ring-black/5 hover:bg-white"
-              >
-                {purge.isPending ? "Clearing…" : "Clear database"}
               </button>
             </div>
           }
         >
+          {liveError && <p className="mb-2 rounded-xl bg-paypal-mist px-3 py-2 text-[12px] text-paypal-navy">{liveError}</p>}
+          {providerNotes.map(({ p, l }) => (
+            <p key={p} className="mb-1.5 rounded-xl bg-paypal-mist px-3 py-1.5 text-[11.5px] text-paypal-navy">
+              <b>{PROVIDER_NAME[p]}:</b> {l.message}
+            </p>
+          ))}
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             <label className="relative min-w-[160px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 opacity-50" />
-              <input className={`${softField} h-9 pl-8 text-[12.5px]`} placeholder="Search name, phone, reference" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <input className={`${softField} h-9 pl-8 text-[12.5px]`} placeholder="Search customer, phone, ID" value={search} onChange={(e) => setSearch(e.target.value)} />
             </label>
-            {(["all", "success", "pending", "failed"] as const).map((s) => (
+            {(["all", "paid", "pending", "failed", "refunded"] as const).map((s) => (
               <button key={s} type="button" onClick={() => setStatusF(s)} className={chipBtn(statusF === s)}>
-                {s === "all" ? "All" : s === "success" ? "Paid" : s[0]!.toUpperCase() + s.slice(1)}
+                {s === "all" ? "All" : s[0]!.toUpperCase() + s.slice(1)}
               </button>
             ))}
           </div>
           <div className="mb-2 flex flex-wrap gap-1.5">
-            {["all", ...methods].map((m) => (
-              <button key={m} type="button" onClick={() => setMethodF(m)} className={chipBtn(methodF === m)}>
-                {m === "all" ? "Every method" : m}
+            {(["all", "pawapay", "whop", "paypal"] as const).map((p) => (
+              <button key={p} type="button" onClick={() => setProviderF(p)} className={chipBtn(providerF === p)}>
+                {p === "all" ? "Every service" : PROVIDER_NAME[p]}
+                {p !== "all" && lists ? ` (${(lists[p] as LiveList).tx.length})` : ""}
               </button>
             ))}
           </div>
           {shown.length === 0 ? (
-            <Empty>{q.isLoading ? "Loading payments…" : "No payments match."}</Empty>
+            <Empty>{liveQ.isLoading || q.isLoading ? "Asking pawaPay, Whop and PayPal…" : "No live payments match."}</Empty>
           ) : (
             <div className="max-h-[560px] space-y-1.5 overflow-y-auto pr-1">
               {shown.map((t) => (
                 <button
-                  key={t.id}
+                  key={`${t.provider}-${t.id}`}
                   type="button"
                   onClick={() => setOpenTx(t)}
                   className="flex w-full items-center gap-2.5 rounded-xl bg-paypal-mist px-2.5 py-2 text-left text-[12.5px] text-paypal-navy transition hover:brightness-[0.98]"
                 >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-paypal-blue text-[12px] font-black text-paypal-foreground">
-                    {t.userName.slice(0, 1).toUpperCase()}
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-paypal-blue text-paypal-foreground">
+                    {t.provider === "whop" ? <CreditCard className="size-4" /> : t.provider === "pawapay" ? <Smartphone className="size-4" /> : <span className="text-[10px] font-black">PP</span>}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-bold">{t.userName}</span>
+                    <span className="block truncate font-bold">{t.who}</span>
                     <span className="block truncate text-[11px] opacity-70">
-                      {methodLabel(t.method ?? t.kind)} · {t.planName} · {fullDate(t.created_at)}
+                      {PROVIDER_NAME[t.provider]} · {fullDate(t.created_at)}
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block font-black">{money(Number(t.amount), t.currency)}</span>
-                    <Pill tone={t.status === "success" ? "on" : ["failed", "expired", "refunded"].includes(t.status) ? "off" : "warn"}>{t.status === "success" ? "paid" : t.status}</Pill>
+                    <span className="block font-black">{formatAmount(t.amount, t.currency)}</span>
+                    <Pill tone={t.status === "paid" ? "on" : t.status === "pending" ? "warn" : "off"}>{t.status}</Pill>
                   </span>
                 </button>
               ))}
@@ -331,9 +335,9 @@ export function WalletTab() {
           )}
         </Panel>
 
-        <Panel title="Withdrawals" action={<button type="button" onClick={() => setWdOpen(true)} className={`${paypalBtn} h-8 px-3 text-[12px]`}>Withdraw</button>}>
+        <Panel title="Payouts sent from here" action={<button type="button" onClick={() => setWdOpen(true)} className={`${paypalBtn} h-8 px-3 text-[12px]`}>Withdraw</button>}>
           {(q.data?.wd.length ?? 0) === 0 ? (
-            <Empty>No withdrawals yet.</Empty>
+            <Empty>No payouts yet.</Empty>
           ) : (
             <ul className="max-h-[560px] space-y-1.5 overflow-y-auto pr-1">
               {q.data?.wd.map((w) => (
@@ -354,24 +358,21 @@ export function WalletTab() {
         </Panel>
       </div>
 
-      {/* transaction detail */}
+      {/* live transaction detail + refund */}
       <Dialog open={!!openTx} onOpenChange={(v) => !v && setOpenTx(null)}>
         <DialogContent className="max-w-[440px] border-0 bg-paypal-mist p-5 text-paypal-navy">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-bold">Transaction details</DialogTitle>
+            <DialogTitle className="text-[17px] font-bold">Payment · {openTx ? PROVIDER_NAME[openTx.provider] : ""}</DialogTitle>
           </DialogHeader>
           {openTx && (
             <div className="space-y-1.5 text-[13px]">
-              <p className="rounded-2xl bg-paypal-gradient px-4 py-3 text-[26px] font-black leading-none">{money(Number(openTx.amount), openTx.currency)}</p>
+              <p className="rounded-2xl bg-paypal-gradient px-4 py-3 text-[26px] font-black leading-none">{formatAmount(openTx.amount, openTx.currency)}</p>
               {[
-                ["User", openTx.userName],
-                ["Email", openTx.userEmail],
-                ["Phone", openTx.phone ?? "—"],
-                ["Plan", openTx.planName],
-                ["Method", methodLabel(openTx.method ?? openTx.kind)],
-                ["Reference", openTx.reference],
-                ["Provider reference", (openTx as { internal_reference?: string | null }).internal_reference ?? "—"],
-                ["Status", openTx.liveStatus ? `${openTx.status} (live)` : openTx.status],
+                ["Customer", openTx.who],
+                ["Status", openTx.status],
+                ["Provider status", openTx.rawStatus || "—"],
+                ["Details", openTx.detail || "—"],
+                ["Provider ID", openTx.id],
                 ["Date", fullDate(openTx.created_at)],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-3 rounded-xl bg-white/80 px-3 py-1.5">
@@ -379,6 +380,18 @@ export function WalletTab() {
                   <span className="max-w-[60%] truncate text-right font-semibold">{v}</span>
                 </div>
               ))}
+              {openTx.refundable && (
+                <button
+                  type="button"
+                  disabled={refund.isPending}
+                  onClick={() => {
+                    if (confirm(`Refund ${formatAmount(openTx.amount, openTx.currency)} to ${openTx.who}? This sends real money back.`)) refund.mutate(openTx);
+                  }}
+                  className={`${paypalBtn} mt-2 w-full`}
+                >
+                  <Undo2 className="size-4" /> {refund.isPending ? "Refunding…" : "Refund this payment"}
+                </button>
+              )}
             </div>
           )}
         </DialogContent>
@@ -391,7 +404,7 @@ export function WalletTab() {
             <DialogTitle className="text-[17px] font-bold">Withdraw · Mobile money (Relworx)</DialogTitle>
           </DialogHeader>
           <p className="text-[12px] opacity-75">
-            Available: <b>{payoutBalance == null ? money(balance) : formatAmount(payoutBalance, form.currency)}</b>
+            Available: <b>{payoutBalance == null ? "Unavailable" : formatAmount(payoutBalance, form.currency)}</b>
           </p>
           <form
             className="mt-1 space-y-2"
